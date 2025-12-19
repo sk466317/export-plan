@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAP Billing Manager Pro - SAP Files & Home System</title>
+    
+    <!-- External Frameworks -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- SheetJS for Excel Support -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    
+    <!-- Firebase Compat -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+        
+        body { font-family: 'Inter', sans-serif; font-size: 10px; background-color: #f8fafc; color: #0f172a; margin: 0; }
+        
+        /* Updated Scrollbar for better visibility and scrolling */
+        .custom-scrollbar::-webkit-scrollbar { width: 10px; height: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; border: 2px solid #f1f1f1; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        .compact-row { height: 26px; }
+        input { 
+            font-size: 10px !important; 
+            outline: none !important; 
+            border: none !important; 
+            width: 100%; 
+            height: 100%; 
+            padding: 0 10px; 
+            font-weight: 700; 
+            background: transparent;
+        }
+        
+        table { border-collapse: collapse; width: auto; table-layout: auto; }
+        th { 
+            background: #0f172a; 
+            color: #f8fafc; 
+            text-transform: uppercase; 
+            font-size: 10px; 
+            font-weight: 800; 
+            border: 1px solid #000; 
+            position: sticky; 
+            top: 0; 
+            z-index: 50; 
+            padding: 6px 12px;
+            white-space: nowrap;
+        }
+        td { border: 1px solid #000; padding: 0; font-size: 10px; white-space: nowrap; }
+
+        tbody tr:nth-child(even) { background-color: #f1f5f9; }
+        tbody tr:nth-child(odd) { background-color: #ffffff; }
+
+        tbody tr:hover { background-color: #bbf7d0 !important; transition: background 0.1s; }
+        tbody tr:focus-within { background-color: #86efac !important; outline: none; }
+
+        .sticky-left-1 { position: sticky; left: 0; z-index: 45 !important; background: #0f172a !important; border-right: 1px solid #000; }
+        .sticky-left-2 { position: sticky; left: 32px; z-index: 45 !important; background: #1e293b !important; border-right: 1px solid #000; }
+        
+        td:focus-within { outline: 2.5px solid #166534; z-index: 10; }
+
+        .col-shipper, .col-wide { min-width: 240px; }
+        .col-billto { min-width: 140px; }
+        .col-uniquekey { min-width: 150px; }
+
+        .suggestion-container { position: absolute; top: 100%; left: 0; width: 850px; background: white; border: 2px solid #000; border-radius: 12px; box-shadow: 0 25px 60px rgba(0,0,0,0.4); z-index: 9999; max-height: 400px; overflow: hidden; display: flex; flex-direction: column; }
+        .suggestion-header { background: #1e293b; color: white; display: grid; grid-template-columns: 1fr 1fr; border-bottom: 2px solid #000; }
+        .suggestion-col-title { padding: 6px 12px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+        .suggestion-body { display: grid; grid-template-columns: 1fr 1fr; overflow-y: auto; flex-grow: 1; }
+        .master-col { border-right: 1px solid #cbd5e1; padding: 6px; background: #f8fafc; }
+        .master-col:last-child { border-right: none; background: #fffbeb; }
+
+        /* Broker specific suggestion UI - Wider for multiple vendors */
+        .broker-suggestion { width: 450px !important; display: block !important; }
+        .broker-body { padding: 8px; display: block !important; max-height: 380px; overflow-y: auto; }
+        .broker-row { padding: 8px; border: 1px solid #e2e8f0; border-radius: 8px; background: white; margin-bottom: 6px; transition: all 0.2s; }
+        .broker-row:hover { border-color: #10b981; background: #f0fdf4; }
+
+        .suggestion-item { padding: 10px; border-radius: 6px; transition: all 0.2s; display: flex; flex-direction: column; gap: 4px; background: white; margin-bottom: 6px; border: 1px solid #e2e8f0; }
+        .suggestion-item:hover { border-color: #2563eb; background-color: #f0f9ff; transform: scale(0.99); }
+        
+        .tag { font-size: 8px; padding: 1px 5px; border-radius: 4px; font-weight: 900; text-transform: uppercase; margin-bottom: 2px; width: fit-content; }
+        .tag-m1 { background-color: #2563eb; color: white; }
+        .tag-m2 { background-color: #d97706; color: white; }
+        .tag-m3 { background-color: #10b981; color: white; }
+        
+        .select-btn { font-size: 9px; font-weight: 800; padding: 4px 8px; border-radius: 6px; text-transform: uppercase; transition: all 0.2s; border: 1px solid transparent; cursor: pointer; display: inline-block; }
+        .select-btn-blue { background: #dbeafe; color: #1e40af; border-color: #bfdbfe; }
+        .select-btn-blue:hover { background: #2563eb; color: white; }
+        .select-btn-amber { background: #fef3c7; color: #92400e; border-color: #fde68a; }
+        .select-btn-amber:hover { background: #d97706; color: white; }
+        .select-btn-green { background: #d1fae5; color: #065f46; border-color: #6ee7b7; }
+        .select-btn-green:hover { background: #10b981; color: white; }
+
+        .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .modal-content { background: white; width: 100%; max-width: 420px; border-radius: 12px; padding: 20px; border: 3px solid #000; box-shadow: 0 40px 80px rgba(0,0,0,0.6); }
+        
+        .progress-bar-container { height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden; margin-top: 12px; width: 100%; border: 1px solid #000; }
+        .progress-bar-fill { height: 100%; background: #2563eb; transition: width 0.3s ease; }
+
+        @keyframes marquee {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+        .scrolling-text {
+            display: inline-block;
+            white-space: nowrap;
+            animation: marquee 12s linear infinite;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useRef, useMemo, useEffect } = React;
+
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "AIzaSyDVBKC6l1iQ4DB83ppyBoyBvcgCU5gfi68",
+            authDomain: "mybillingapp-38c65.firebaseapp.com",
+            projectId: "mybillingapp-38c65",
+            storageBucket: "mybillingapp-38c65.firebasestorage.app",
+            messagingSenderId: "568659651466",
+            appId: "1:568659651466:web:9bfb8b7d4cf5af940f7673"
+        };
+        const appId = typeof __app_id !== 'undefined' ? __app_id : "mybillingapp-38c65";
+
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        const formatDate = () => {
+            const d = new Date();
+            return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getFullYear()).slice(-2)}`;
+        };
+
+        const App = () => {
+            const [user, setUser] = useState(null);
+            const [view, setView] = useState('billing'); 
+            const [records, setRecords] = useState([]);
+            const [headers, setHeaders] = useState([]);
+            const [master1, setMaster1] = useState([]); 
+            const [master2, setMaster2] = useState([]); 
+            const [master3, setMaster3] = useState([]); 
+            const [savedJobs, setSavedJobs] = useState([]); 
+            const [isUploaded, setIsUploaded] = useState(false);
+            const [syncing, setSyncing] = useState(false);
+            const [search, setSearch] = useState({ show: false, m1List: [], m2List: [], m3List: [], row: null, field: null });
+            
+            const [showSaveModal, setShowSaveModal] = useState(false);
+            const [showHomeModal, setShowHomeModal] = useState(false);
+            const [showUpdateModal, setShowUpdateModal] = useState(false);
+            
+            const [jobNameInput, setJobNameInput] = useState("");
+            const [activeJobName, setActiveJobName] = useState("");
+            const [isSaving, setIsSaving] = useState(false);
+            const [saveProgress, setSaveProgress] = useState(0);
+            
+            const [afterSaveRedirect, setAfterSaveRedirect] = useState(null);
+
+            const SERIAL_HEADERS = [
+                "Serial No.", "SMTP/Forwarding No.", "SMTP/Forwarding Date", "SMTP Received Date", "Vessel Name", 
+                "Voyage Number", "Discharge Date", "BL Number", "Terminal", "Container Number", 
+                "Cabotage Flag(C)", "Container Type", "F/E", "Cargo Commodity", "Description", 
+                "Customer Commodity", "Packages", "Shippin Line Code", "Description 1", "Bill to Party Code", 
+                "Shipper Code", "Description 2", "Consignee Code", "Description 3", "Tare wt", 
+                "Cargo Weight", "Booking Location", "Origin Location", "Destination Location", "Handover Location", 
+                "Lineseal", "Customs Seal", "EXIM (Import/Export)", "Minimum Termperature", "Maximum temperature", 
+                "HAZ/NON Haz", "UNNO", "Class", "IMCO", "Container Owner", 
+                "Place of Supply", "Invoice Type", "WO Number", "Tarrif Type", "Export Gate In Date", 
+                "LEO Issued date", "LEO Received Date", "SB Number", "SB Date", "Export Invoice Numbe", 
+                "Export Invoice Date", "Broker 1 Code", "Broker 1 Name", "Broker 2 Code", "Broker 2 Name", 
+                "Broker 3 Code", "Broker 3 Name", "Empty Pickup Locatio", "Loaded Pickup Locati", "EDI Code", 
+                "Remark", "HSN CODE", "Trip Type", "Unique Key", "CS Tariff(Y/N)", 
+                "GR Vendor Code", "ICD Billing", "Line A/c", "CHA"
+            ];
+
+            useEffect(() => {
+                const initAuth = async () => {
+                    try {
+                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                            await auth.signInWithCustomToken(__initial_auth_token);
+                        } else {
+                            await auth.signInAnonymously();
+                        }
+                    } catch (err) {
+                        console.error("Auth failed, retrying...", err);
+                        setTimeout(initAuth, 2000);
+                    }
+                };
+                initAuth();
+                const unsubscribe = auth.onAuthStateChanged(u => setUser(u));
+                return () => unsubscribe();
+            }, []);
+
+            useEffect(() => {
+                if (user) {
+                    loadMasters();
+                    fetchSavedJobs();
+                }
+            }, [user]);
+
+            const fetchSavedJobs = async () => {
+                if (!user) return;
+                try {
+                    const snap = await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('billing_jobs').get();
+                    const list = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    setSavedJobs(list);
+                } catch (e) { console.error("Job Fetch Error", e); }
+            };
+
+            const loadMasters = async () => {
+                if (!user) return;
+                setSyncing(true);
+                try {
+                    const m1Snap = await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('master1_chunks').get();
+                    let m1Data = [];
+                    m1Snap.forEach(doc => { m1Data = m1Data.concat(doc.data().rows || []); });
+                    setMaster1(m1Data);
+                    
+                    const m2Snap = await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('master2_chunks').get();
+                    let m2Data = [];
+                    m2Snap.forEach(doc => { m2Data = m2Data.concat(doc.data().rows || []); });
+                    setMaster2(m2Data);
+
+                    const m3Snap = await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('master3_chunks').get();
+                    let m3Data = [];
+                    m3Snap.forEach(doc => { m3Data = m3Data.concat(doc.data().rows || []); });
+                    setMaster3(m3Data);
+                } catch (e) { console.warn("Load Error", e); }
+                setSyncing(false);
+            };
+
+            const saveMasters = async (type, data) => {
+                if (!user) return;
+                setSyncing(true);
+                try {
+                    const collectionName = type === 'm1' ? 'master1_chunks' : type === 'm2' ? 'master2_chunks' : 'master3_chunks';
+                    const chunkSize = 800;
+                    const chunks = [];
+                    for (let i = 0; i < data.length; i += chunkSize) {
+                        chunks.push(data.slice(i, i + chunkSize));
+                    }
+                    for (let i = 0; i < chunks.length; i++) {
+                        await db.collection('artifacts').doc(appId).collection('public').doc('data').collection(collectionName).doc(`chunk_${i}`).set({ rows: chunks[i] });
+                    }
+                    if (type === 'm1') setMaster1(data);
+                    else if (type === 'm2') setMaster2(data);
+                    else setMaster3(data);
+                    alert(`Master ${type.toUpperCase()} saved!`);
+                } catch (e) { alert("Save Error: " + e.message); }
+                setSyncing(false);
+            };
+
+            const saveCurrentJob = async () => {
+                if (!user) return;
+                const name = jobNameInput.trim();
+                if (!name || isSaving) return;
+                
+                setIsSaving(true);
+                setSaveProgress(10);
+
+                try {
+                    const docRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('billing_jobs').doc(name);
+                    const existingDoc = await docRef.get();
+                    setSaveProgress(30);
+                    
+                    const now = formatDate();
+                    let payload = {
+                        records: records,
+                        headers: headers,
+                        lastModified: now
+                    };
+
+                    if (existingDoc.exists) {
+                        payload.createdOn = existingDoc.data().createdOn || now;
+                        payload.isUpdate = true;
+                    } else {
+                        payload.createdOn = now;
+                        payload.isUpdate = false;
+                    }
+                    
+                    setSaveProgress(60);
+                    await docRef.set(payload);
+                    setSaveProgress(90);
+
+                    setShowSaveModal(false);
+                    setActiveJobName(name);
+                    await fetchSavedJobs();
+                    
+                    setSaveProgress(100);
+                    setTimeout(() => {
+                        setIsSaving(false);
+                        setSaveProgress(0);
+                        if (afterSaveRedirect === 'home') {
+                            resetToHome();
+                        } else {
+                            setIsUploaded(true);
+                        }
+                        setAfterSaveRedirect(null);
+                    }, 500);
+                } catch (e) { 
+                    alert("Job Save Error: " + e.message); 
+                    setIsSaving(false);
+                    setSaveProgress(0);
+                }
+            };
+
+            const resetToHome = () => {
+                setRecords([]);
+                setHeaders([]);
+                setIsUploaded(false);
+                setActiveJobName("");
+                setView('billing');
+                setShowHomeModal(false);
+            };
+
+            const loadJob = (job) => {
+                setRecords(job.records || []);
+                setHeaders(job.headers || []);
+                setIsUploaded(true);
+                setActiveJobName(job.id);
+                setView('billing');
+            };
+
+            const deleteJob = async (jobId) => {
+                if (!user) return;
+                if (!confirm("Delete this saved data?")) return;
+                setSyncing(true);
+                try {
+                    await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('billing_jobs').doc(jobId).delete();
+                    if(activeJobName === jobId) setActiveJobName(""); 
+                    await fetchSavedJobs();
+                } catch (e) { alert("Delete Error: " + e.message); }
+                setSyncing(false);
+            };
+
+            const allCols = [
+                { key: 'Container Number', label: 'Container Number' },
+                { key: 'Customer Commodity', label: 'Customer Commodity' },
+                { key: 'Description 1', label: 'Description 1' },
+                { key: 'Bill to Party Code', label: 'Bill to Party Code' },
+                { key: 'Shipper Code', label: 'Shipper Code' },
+                { key: 'HAZ/NON Haz', label: 'HAZ/NON Haz' },
+                { key: 'Broker 1 Name', label: 'Broker 1 Name' },
+                { key: 'Broker 2 Name', label: 'Broker 2 Name' },
+                { key: 'Broker 3 Name', label: 'Broker 3 Name' },
+                { key: 'Unique Key', label: 'Unique Key' },
+                { key: 'ICD Billing', label: 'ICD Billing' },
+                { key: 'Line A/c', label: 'Line A/c' },
+                { key: 'CHA', label: 'CHA' }
+            ];
+
+            const wideCols = ['Shipper Code', 'Broker 1 Name', 'Broker 2 Name', 'Broker 3 Name', 'CHA', 'ICD Billing'];
+            const editableFields = ['Bill to Party Code', 'Shipper Code', 'Broker 1 Name', 'Broker 2 Name', 'Broker 3 Name', 'Unique Key', 'ICD Billing', 'Line A/c', 'CHA'];
+
+            const onFileUp = (e, type) => {
+                const f = e.target.files[0];
+                if (!f) return;
+                const r = new FileReader();
+                r.onload = (ev) => {
+                    const dataRaw = ev.target.result;
+                    const workbook = XLSX.read(dataRaw, { type: 'binary' });
+                    const firstSheet = workbook.SheetNames[0];
+                    
+                    if (type === 'bill') {
+                        const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet], { defval: "" });
+                        const sheetHeaders = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet], { header: 1 })[0];
+                        setRecords(jsonData);
+                        setHeaders(sheetHeaders);
+                        setJobNameInput("");
+                        setShowSaveModal(true);
+                    }
+                    else if (type === 'update_line_cha') {
+                        const rows = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet], { header: 1 });
+                        let matchedCount = 0;
+                        const updatedRecords = records.map(record => {
+                            const mainContainer = (record['Container Number'] || '').toString().trim();
+                            if (!mainContainer) return record;
+                            const match = rows.slice(1).find(row => (row[7] || '').toString().trim() === mainContainer);
+                            if (match) {
+                                matchedCount++;
+                                return { ...record, 'Line A/c': (match[33] || '').toString().trim(), 'CHA': (match[31] || '').toString().trim() };
+                            }
+                            return record;
+                        });
+                        setRecords(updatedRecords);
+                        setShowUpdateModal(false);
+                        alert(`Update Complete! Matched & Updated ${matchedCount} Containers.`);
+                    }
+                    else {
+                        const rows = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet], { header: 1 });
+                        const hRaw = rows[0];
+                        if (type === 'm1') {
+                            const vtIdx = hRaw.findIndex(h => h && h.toString().toLowerCase().includes("valid to"));
+                            const filtered = rows.slice(1).map(v => ({
+                                "Cost Sheet No": (v[1] || '').toString().trim(),
+                                "Bill to Party": (v[2] || '').toString().trim(),
+                                "LineDesc": (v[3] || '').toString().trim(),
+                                "Shipper Code": (v[4] || '').toString().trim(),
+                                "Description": (v[5] || '').toString().trim(),
+                                "Valid To": vtIdx > -1 ? (v[vtIdx] || '').toString().trim() : ''
+                            })).filter(x => x.Description);
+                            setMaster1(filtered);
+                        } else if (type === 'm2') {
+                            const filtered = rows.slice(1).map(v => ({
+                                "Customer": (v[2] || '').toString().trim(),
+                                "customer Name": (v[4] || '').toString().trim(),
+                                "Address": (v[5] || '').toString().trim(),
+                                "Street 2": (v[6] || '').toString().trim(),
+                                "Street 4": (v[8] || '').toString().trim()
+                            })).filter(x => x['customer Name']);
+                            setMaster2(filtered);
+                        } else if (type === 'm3') {
+                            const filtered = rows.slice(1).map(v => ({
+                                "Vendor1": (v[0] || '').toString().trim(),
+                                "Vendor2": (v[1] || '').toString().trim(),
+                                "Vendor3": (v[2] || '').toString().trim()
+                            })).filter(x => x.Vendor1 || x.Vendor2 || x.Vendor3);
+                            setMaster3(filtered);
+                        }
+                    }
+                };
+                r.readAsBinaryString(f);
+            };
+
+            const handleTyping = (idx, key, val) => {
+                const up = [...records];
+                up[idx][key] = val;
+                setRecords(up);
+                if (val.length > 1) {
+                    const q = val.toLowerCase();
+                    if (['Bill to Party Code', 'Shipper Code'].includes(key)) {
+                        const m1MatchesRaw = master1.filter(m => (m.Description && m.Description.toLowerCase().includes(q)) || (m.LineDesc && m.LineDesc.toLowerCase().includes(q)) || (m['Bill to Party'] && m['Bill to Party'].toString().toLowerCase().includes(q)));
+                        const m1UniqueMap = new Map();
+                        m1MatchesRaw.forEach(m => {
+                            const uk = `${m.Description}-${m.LineDesc}-${m['Cost Sheet No']}-${m['Valid To']}`;
+                            if (!m1UniqueMap.has(uk)) {
+                                m1UniqueMap.set(uk, { name: m.Description, lineDesc: m.LineDesc, btp: m['Bill to Party'], sc: m['Shipper Code'], vt: m['Valid To'], cs: m['Cost Sheet No'], type: 'M1' });
+                            }
+                        });
+                        const m1Res = Array.from(m1UniqueMap.values()).sort((a, b) => {
+                            if (!a.vt || !b.vt) return 0;
+                            const [d1, m1, y1] = a.vt.split('-').map(Number);
+                            const [d2, m2, y2] = b.vt.split('-').map(Number);
+                            return new Date(y2, m2-1, d2) - new Date(y1, m1-1, d1);
+                        }).slice(0, 15);
+                        const m2Res = master2.filter(m => (m['customer Name'] && m['customer Name'].toLowerCase().includes(q)) || (m['Customer'] && m['Customer'].toString().toLowerCase().includes(q))).map(m => ({ name: m['customer Name'], btp: m['Customer'], sc: m['Customer'], addr: m.Address, s2: m['Street 2'], s4: m['Street 4'], type: 'M2' })).slice(0, 15);
+                        setSearch({ show: true, m1List: m1Res, m2List: m2Res, m3List: [], row: idx, field: key });
+                    }
+                    else if (['Broker 1 Name', 'Broker 2 Name', 'Broker 3 Name'].includes(key)) {
+                        const matchedRows = master3.filter(m => 
+                            (m.Vendor1 && m.Vendor1.toLowerCase().includes(q)) || 
+                            (m.Vendor2 && m.Vendor2.toLowerCase().includes(q)) || 
+                            (m.Vendor3 && m.Vendor3.toLowerCase().includes(q))
+                        ).slice(0, 15);
+                        setSearch({ show: true, m1List: [], m2List: [], m3List: matchedRows, row: idx, field: key });
+                    }
+                    else setSearch({ ...search, show: false });
+                } else setSearch({ ...search, show: false });
+            };
+
+            const selectItem = (item, selectedCode) => {
+                setRecords(prev => {
+                    const up = [...prev];
+                    up[search.row][search.field] = selectedCode;
+                    if (item.cs) up[search.row]['Unique Key'] = item.cs || '';
+                    return up;
+                });
+                setSearch(prev => ({ ...prev, show: false }));
+            };
+
+            const selectBrokerGroup = (brokerObj) => {
+                setRecords(prev => {
+                    const up = [...prev];
+                    up[search.row]['Broker 1 Name'] = brokerObj.Vendor1 || '';
+                    up[search.row]['Broker 2 Name'] = brokerObj.Vendor2 || '';
+                    up[search.row]['Broker 3 Name'] = brokerObj.Vendor3 || '';
+                    return up;
+                });
+                setSearch(prev => ({ ...prev, show: false }));
+            };
+
+            // MODIFIED: Added instruction to hide search modal on Enter
+            const handleKeyDown = (e, rowIdx, colKey) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    
+                    // Hide Suggestion Box on Enter
+                    setSearch(prev => ({ ...prev, show: false }));
+
+                    const nextRowIdx = rowIdx + 1;
+                    if (nextRowIdx < records.length) {
+                        const nextInput = document.getElementById(`input-${nextRowIdx}-${colKey}`);
+                        if (nextInput) nextInput.focus();
+                    }
+                }
+            };
+
+            const downloadGeneric = (data, filename) => {
+                const ws = XLSX.utils.json_to_sheet(data, { header: SERIAL_HEADERS });
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "BillingData");
+                XLSX.writeFile(wb, `${filename || 'EXPORT'}.xlsx`);
+            };
+
+            const downloadFinal = () => {
+                const fileName = activeJobName || `SAP_FINAL_EXPORT_${formatDate()}`;
+                downloadGeneric(records, fileName);
+            };
+
+            const handleHomeClick = () => {
+                if (isUploaded && records.length > 0) setShowHomeModal(true);
+                else { setView('billing'); setIsUploaded(false); }
+            };
+
+            if (!user) {
+                return <div className="h-screen flex flex-col items-center justify-center bg-slate-900 text-white font-black uppercase"><div className="animate-pulse mb-4 text-sm tracking-widest text-blue-400">Connecting to Cloud Backend...</div></div>;
+            }
+
+            return (
+                <div className="h-screen flex flex-col overflow-hidden" onClick={() => setSearch({ ...search, show: false })}>
+                    <nav className="bg-slate-900 text-white p-2 flex justify-between items-center border-b-2 border-blue-600 shadow-xl z-50">
+                        <div className="flex items-center gap-4 pl-2 font-black uppercase tracking-tighter">
+                            <span className="text-sm text-blue-400 italic">SAP Billing Pro</span>
+                            <div className="flex bg-slate-800 rounded p-0.5 text-[8px]">
+                                <button onClick={handleHomeClick} className={`px-4 py-1.5 rounded transition-all hover:bg-slate-700`}>HOME</button>
+                                <button onClick={() => setView('billing')} className={`px-4 py-1.5 rounded transition-all ${view === 'billing' ? 'bg-blue-600' : 'text-slate-400'}`}>PORTAL</button>
+                                <button onClick={() => { if(!isUploaded) return alert("Upload billing file first!"); setShowUpdateModal(true); }} className={`px-4 py-1.5 rounded transition-all bg-emerald-600 hover:bg-emerald-500 ml-1 uppercase`}>Update "Line A/c / CHA"</button>
+                                <button onClick={() => setView('masters')} className={`px-4 py-1.5 rounded transition-all ${view === 'masters' ? 'bg-blue-600' : 'text-slate-400'}`}>MASTERS</button>
+                                <button onClick={() => setView('saved')} className={`px-4 py-1.5 rounded transition-all ${view === 'saved' ? 'bg-blue-600' : 'text-slate-400'}`}>SAP FILES</button>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-3 pr-2"><button onClick={() => { setJobNameInput(activeJobName); setShowSaveModal(true); }} className="bg-blue-600 px-4 py-1.5 rounded text-[9px] font-black uppercase hover:bg-blue-500 transition-all shadow-lg">SAVE WORK</button></div>
+                    </nav>
+
+                    <div className="flex-1 flex flex-col overflow-hidden relative">
+                        {view === 'saved' ? (
+                            <div className="p-8 max-w-4xl mx-auto w-full h-full overflow-y-auto custom-scrollbar">
+                                <div className="bg-white rounded-[20px] shadow-2xl p-8 border-2 border-black">
+                                    <h2 className="text-xs font-black uppercase text-slate-800 mb-6 border-b-2 border-black pb-2 tracking-widest text-center italic">SAP Cloud Archive - List Box</h2>
+                                    <div className="grid grid-cols-1 gap-4">
+                                        {savedJobs.length > 0 ? savedJobs.map((job) => (
+                                            <div key={job.id} className="p-4 bg-slate-50 border border-black rounded-xl flex justify-between items-center group hover:bg-emerald-50 transition-all">
+                                                <div>
+                                                    <div className="font-black text-xs text-slate-900 uppercase">{job.id}</div>
+                                                    <div className="flex gap-3 mt-1 text-[8px] font-bold uppercase"><span className="text-slate-500">Rows: {job.records?.length || 0}</span><span className="text-blue-600">Saved on {job.createdOn}</span>{job.isUpdate && <span className="text-emerald-600 ml-2 border-l border-slate-300 pl-2">Updated on {job.lastModified}</span>}</div>
+                                                </div>
+                                                <div className="flex gap-2">
+                                                    <button onClick={() => loadJob(job)} className="bg-slate-900 text-white px-4 py-2 rounded-lg text-[8px] font-black hover:bg-blue-700 uppercase">Load File</button>
+                                                    <button onClick={() => downloadGeneric(job.records, job.id)} className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-[8px] font-black hover:bg-emerald-700 uppercase">Download</button>
+                                                    <button onClick={() => deleteJob(job.id)} className="bg-white text-red-600 border border-red-600 px-4 py-2 rounded-lg text-[8px] font-black hover:bg-red-600 hover:text-white uppercase">Delete</button>
+                                                </div>
+                                            </div>
+                                        )) : <div className="p-12 text-center text-slate-400 font-bold italic uppercase tracking-widest">No SAP Files found.</div>}
+                                    </div>
+                                </div>
+                            </div>
+                        ) : view === 'masters' ? (
+                            <div className="max-w-xl mx-auto w-full p-8 space-y-6 h-full overflow-y-auto custom-scrollbar">
+                                <div className="bg-white p-8 rounded-[40px] shadow-2xl border-2 border-black">
+                                    <h2 className="text-[10px] font-black mb-6 uppercase text-slate-400 border-b pb-2 tracking-widest text-center">Master Configuration</h2>
+                                    <div className="space-y-6">
+                                        <div className="p-4 bg-blue-50/50 rounded-2xl border border-black text-center"><h3 className="font-black text-[9px] uppercase text-blue-700 mb-1 underline">Master 1 (B, C, D, E, F, CH)</h3><input type="file" onChange={(e) => onFileUp(e, 'm1')} className="text-[9px] mb-3 w-full" /><button onClick={() => saveMasters('m1', master1)} className="w-full bg-blue-600 text-white py-2 rounded-xl text-[9px] font-black uppercase shadow-lg">Save M1</button></div>
+                                        <div className="p-4 bg-amber-50/50 rounded-2xl border border-black text-center"><h3 className="font-black text-[9px] uppercase text-blue-700 mb-1 underline">Master 2 (C, E, F, G, I)</h3><input type="file" onChange={(e) => onFileUp(e, 'm2')} className="text-[9px] mb-3 w-full" /><button onClick={() => saveMasters('m2', master2)} className="w-full bg-amber-600 text-white py-2 rounded-xl text-[9px] font-black uppercase shadow-lg">Save M2</button></div>
+                                        <div className="p-4 bg-emerald-50/50 rounded-2xl border border-black text-center"><h3 className="font-black text-[9px] uppercase text-emerald-700 mb-1 underline">Master 3 (A-C: Broker Master)</h3><input type="file" onChange={(e) => onFileUp(e, 'm3')} className="text-[9px] mb-3 w-full" /><button onClick={() => saveMasters('m3', master3)} className="w-full bg-emerald-600 text-white py-2 rounded-xl text-[9px] font-black uppercase shadow-lg">Save M3</button></div>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="flex-1 p-2 flex flex-col overflow-hidden">
+                                {!isUploaded ? (
+                                    <div className="flex-1 flex items-center justify-center">
+                                        <div className="bg-white p-12 rounded-[50px] border-4 border-black text-center shadow-2xl max-sm overflow-hidden relative">
+                                            <h2 className="text-2xl font-black mb-6 uppercase text-slate-800 tracking-tighter italic">SAP Billing Entry</h2>
+                                            <input type="file" onChange={(e) => onFileUp(e, 'bill')} accept=".xlsx, .csv" className="hidden" id="f-up" />
+                                            <label htmlFor="f-up" className="bg-slate-900 text-white px-12 py-4 rounded-3xl font-black cursor-pointer inline-block hover:bg-blue-700 uppercase text-[10px] tracking-widest transition-all shadow-xl">Select Excel File</label>
+                                            <div className="mt-8 flex justify-center gap-4 text-[8px] font-black text-slate-400 border-t border-black pt-4 uppercase"><span>✓ M1: {master1.length}</span><span className="w-px h-3 bg-slate-200"></span><span>✓ M2: {master2.length}</span><span className="w-px h-3 bg-slate-200"></span><span>✓ M3: {master3.length}</span></div>
+                                            <div className="mt-4 w-full overflow-hidden whitespace-nowrap bg-slate-50 py-1 border-t border-b border-slate-100"><div className="scrolling-text text-[8px] font-black text-blue-600 uppercase tracking-widest">Created By Vikram Singh &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Created By Vikram Singh &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Created By Vikram Singh</div></div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div className="flex justify-between items-center mb-1 bg-white p-1 rounded-lg border-2 border-black shadow-sm px-4">
+                                            <div className="text-[9px] font-black uppercase text-slate-500 flex items-center gap-3"><span className="text-blue-600">Active Job: {activeJobName || 'Unnamed'}</span><span className="w-px h-3 bg-slate-300"></span><span>Records: {records.length}</span></div>
+                                            <button onClick={downloadFinal} className="bg-emerald-600 text-white px-6 py-1.5 rounded-lg text-[9px] font-black uppercase shadow hover:bg-emerald-700 transition-all tracking-widest italic font-bold">Download Final .xlsx (A-BQ)</button>
+                                        </div>
+                                        <div className="bg-white rounded-lg shadow-xl border-2 border-black overflow-hidden flex-1 flex flex-col">
+                                            <div className="overflow-auto flex-1 custom-scrollbar">
+                                                <table className="w-full border-collapse">
+                                                    <thead><tr className="compact-row"><th className="sticky left-0 sticky-left-1 text-center font-black">#</th><th className="sticky left-32 sticky-left-2 shadow-sm" style={{left: '32px'}}></th>{allCols.map(c => <th key={c.key} className={`p-1.5 text-left whitespace-nowrap ${wideCols.includes(c.key) ? 'col-shipper' : ''}`}>{c.label}</th>)}</tr></thead>
+                                                    <tbody>
+                                                        {records.map((r, i) => (
+                                                            <tr key={i} className="border-b border-black compact-row transition-colors">
+                                                                <td className="p-0 text-center bg-slate-100 font-black text-slate-400 border-r border-black sticky left-0 z-40 text-[8px]">{i + 1}</td>
+                                                                <td className="p-0 text-center bg-white border-r border-black sticky left-32 z-40 shadow-sm" style={{left: '32px'}}><div className="w-full h-full flex items-center justify-center text-blue-500 opacity-20 hover:opacity-100 cursor-help"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></div></td>
+                                                                {allCols.map(c => {
+                                                                    const ed = editableFields.includes(c.key);
+                                                                    return (
+                                                                        <td key={c.key} className={`p-0 border-r border-black relative overflow-visible whitespace-nowrap ${wideCols.includes(c.key) ? 'col-shipper' : ''}`}>
+                                                                            {ed ? (
+                                                                                <>
+                                                                                    <input 
+                                                                                        id={`input-${i}-${c.key}`}
+                                                                                        type="text" 
+                                                                                        value={r[c.key] || ''} 
+                                                                                        onChange={(e) => handleTyping(i, c.key, e.target.value)} 
+                                                                                        onKeyDown={(e) => handleKeyDown(e, i, c.key)}
+                                                                                        className="w-full h-full font-bold text-blue-900" 
+                                                                                    />
+                                                                                    {search.show && search.row === i && search.field === c.key && (
+                                                                                        <div className={`suggestion-container custom-scrollbar shadow-2xl ${search.m3List.length > 0 ? 'broker-suggestion' : ''}`} onClick={(e) => e.stopPropagation()}>
+                                                                                            {search.m3List.length > 0 ? (
+                                                                                                <div className="broker-body">
+                                                                                                    <div className="bg-emerald-900 text-white p-2 font-black text-[8px] uppercase tracking-widest mb-2 border-b border-black">Master 3: Grouped Broker Match</div>
+                                                                                                    {search.m3List.map((m, bidx) => (
+                                                                                                        <div key={bidx} className="broker-row">
+                                                                                                            <div className="flex justify-between items-start">
+                                                                                                                <div className="space-y-1">
+                                                                                                                    <div className="text-[9px] font-black text-slate-800 uppercase">1. {m.Vendor1 || '-'}</div>
+                                                                                                                    <div className="text-[9px] font-black text-slate-600 uppercase">2. {m.Vendor2 || '-'}</div>
+                                                                                                                    <div className="text-[9px] font-black text-slate-600 uppercase">3. {m.Vendor3 || '-'}</div>
+                                                                                                                </div>
+                                                                                                                <button onClick={() => selectBrokerGroup(m)} className="select-btn select-btn-green py-2 px-6">Use Group</button>
+                                                                                                            </div>
+                                                                                                        </div>
+                                                                                                    ))}
+                                                                                                </div>
+                                                                                            ) : (
+                                                                                                <>
+                                                                                                    <div className="suggestion-header"><div className="suggestion-col-title bg-blue-900 border-r border-black">Master 1 Suggestions</div><div className="suggestion-col-title bg-amber-900">Master 2 Suggestions</div></div>
+                                                                                                    <div className="suggestion-body">
+                                                                                                        <div className="master-col">
+                                                                                                            {search.m1List.length > 0 ? search.m1List.map((m, midx) => (
+                                                                                                                <div key={midx} className="suggestion-item"><span className="tag tag-m1">M1</span><div className="flex justify-between items-center gap-2"><div className="font-extrabold text-[10px] text-slate-800 uppercase leading-tight flex-1">{m.name}</div><button onClick={() => selectItem(m, m.sc)} className="select-btn select-btn-blue whitespace-nowrap min-w-[120px] text-center">Use Shipper: {m.sc}</button></div><div className="flex justify-between items-center gap-2 mt-2"><div className="font-black text-[10px] text-slate-700 uppercase leading-tight flex-1 italic">{m.lineDesc}</div><button onClick={() => selectItem(m, m.btp)} className="select-btn select-btn-blue whitespace-nowrap min-w-[120px] text-center">Use BillTo: {m.btp}</button></div><div className="text-[9px] font-bold text-slate-500 mt-2 italic">Ref: {m.cs} | Expires: {m.vt}</div></div>
+                                                                                                            )) : <div className="p-4 text-slate-400 text-center italic text-[10px]">No matches in M1</div>}
+                                                                                                        </div>
+                                                                                                        <div className="master-col">
+                                                                                                            {search.m2List.length > 0 ? search.m2List.map((m, midx) => (
+                                                                                                                <div key={midx} className="suggestion-item"><span className="tag tag-m2">M2</span><div className="font-extrabold text-[10px] text-slate-800 uppercase leading-tight">{m.name}</div><div className="address-box"><span className="address-line">{m.addr}</span><span className="address-line">{m.s2}</span><span className="address-line">{m.s4}</span></div><div className="flex gap-2 mt-3 pt-2 border-t border-slate-100"><button onClick={() => selectItem(m, m.btp)} className="select-btn select-btn-amber w-center text-center">Use Code: {m.btp}</button></div></div>
+                                                                                                            )) : <div className="p-4 text-slate-400 text-center italic text-[10px]">No matches in M2</div>}
+                                                                                                        </div>
+                                                                                                    </div>
+                                                                                                </>
+                                                                                            )}
+                                                                                        </div>
+                                                                                    )}
+                                                                                </>
+                                                                            ) : <div className="px-3 h-full flex items-center truncate font-bold text-slate-500 bg-slate-50/20 whitespace-nowrap min-w-[100px]">{r[c.key] || '-'}</div>}
+                                                                        </td>
+                                                                    );
+                                                                })}
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Bulk Update Modal */}
+                    {showUpdateModal && (
+                        <div className="modal-bg">
+                            <div className="modal-content animate-in fade-in zoom-in duration-150">
+                                <div className="flex justify-between items-center border-b-2 border-emerald-600 pb-2 mb-4"><h3 className="text-[10px] font-black uppercase text-emerald-800 tracking-widest italic">Bulk Update Line A/c & CHA</h3><button onClick={() => setShowUpdateModal(false)} className="text-slate-400 hover:text-black">✕</button></div>
+                                <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-200 text-center">
+                                    <p className="text-[9px] font-bold text-emerald-700 mb-4 uppercase">Match Containers and update values.</p>
+                                    <input type="file" onChange={(e) => onFileUp(e, 'update_line_cha')} accept=".xlsx, .xls" className="text-[10px] font-bold w-full bg-white p-4 rounded-xl border-2 border-dashed border-emerald-300" />
+                                    <div className="mt-4 text-[7px] text-slate-500 uppercase leading-relaxed text-left pl-2">Match: H (Container) | Updates: AF (CHA), AH (Line A/c)</div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Save Modal */}
+                    {showSaveModal && (
+                        <div className="modal-bg">
+                            <div className="modal-content animate-in fade-in zoom-in duration-150">
+                                <div className="flex justify-between items-center border-b border-black pb-2 mb-4"><h3 className="text-[10px] font-black uppercase text-slate-800 tracking-widest italic">Save to SAP Cloud</h3><button onClick={() => setShowSaveModal(false)} className="text-slate-400 hover:text-black" disabled={isSaving}>✕</button></div>
+                                <div className="flex gap-2 items-center"><input type="text" value={jobNameInput} onChange={(e) => setJobNameInput(e.target.value)} placeholder="Enter File Name..." className={`flex-1 bg-slate-100 p-3 rounded-lg border-2 border-black text-[11px] font-black h-10 ${isSaving ? 'opacity-50' : ''}`} autoFocus disabled={isSaving} /><button onClick={saveCurrentJob} className={`bg-blue-600 text-white px-6 h-10 rounded-lg text-[10px] font-black uppercase shadow-xl transition-all ${isSaving ? 'opacity-70' : 'hover:bg-blue-700'}`} disabled={isSaving}>{isSaving ? `${saveProgress}%` : 'Save'}</button></div>
+                                {isSaving && <div className="progress-bar-container"><div className="progress-bar-fill" style={{ width: `${saveProgress}%` }}></div></div>}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Home Confirmation Modal */}
+                    {showHomeModal && (
+                        <div className="modal-bg">
+                            <div className="modal-content animate-in fade-in zoom-in duration-150 text-center">
+                                <h3 className="text-xs font-black uppercase text-slate-800 mb-2 italic">Confirm Action</h3>
+                                <p className="text-[10px] font-bold text-slate-600 mb-6 uppercase">Do you want to save the current file before going Home?</p>
+                                <div className="flex flex-col gap-2"><button onClick={() => { setShowHomeModal(false); setAfterSaveRedirect('home'); setJobNameInput(activeJobName); setShowSaveModal(true); }} className="bg-blue-600 text-white py-3 rounded-lg text-[10px] font-black uppercase shadow-lg hover:bg-blue-700 transition-all">Yes, Save & Home</button><button onClick={resetToHome} className="bg-slate-900 text-white py-3 rounded-lg text-[10px] font-black uppercase shadow-lg hover:bg-slate-800 transition-all">No, Go Home Directly</button><button onClick={() => setShowHomeModal(false)} className="text-slate-400 py-2 text-[9px] font-black uppercase hover:text-slate-600">Cancel</button></div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
