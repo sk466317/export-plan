@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SAP Billing Manager Pro - SAP Files & Home System</title>
+    <title>SAP Billing Manager Pro - Secure Cloud</title>
     
     <!-- External Frameworks -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -11,8 +11,8 @@
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     
-    <!-- SheetJS for Excel Support -->
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- SheetJS with Style support -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
     
     <!-- Firebase Compat -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -22,15 +22,23 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
         
-        body { font-family: 'Inter', sans-serif; font-size: 10px; background-color: #f8fafc; color: #0f172a; margin: 0; }
+        /* 95% Zoom aur Universal Bold Text */
+        body { 
+            font-family: 'Inter', sans-serif; 
+            font-size: 10px; 
+            background-color: #f8fafc; 
+            color: #0f172a; 
+            margin: 0; 
+            zoom: 95%; 
+            font-weight: 700 !important; 
+        }
         
-        /* Updated Scrollbar for better visibility and scrolling */
-        .custom-scrollbar::-webkit-scrollbar { width: 10px; height: 10px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 10px; height: 12px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; border: 2px solid #f1f1f1; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-        .compact-row { height: 26px; }
+        .compact-row { height: 28px; }
         input { 
             font-size: 10px !important; 
             outline: none !important; 
@@ -38,8 +46,9 @@
             width: 100%; 
             height: 100%; 
             padding: 0 10px; 
-            font-weight: 700; 
+            font-weight: 700 !important; 
             background: transparent;
+            display: block;
         }
         
         table { border-collapse: collapse; width: auto; table-layout: auto; }
@@ -56,7 +65,7 @@
             padding: 6px 12px;
             white-space: nowrap;
         }
-        td { border: 1px solid #000; padding: 0; font-size: 10px; white-space: nowrap; }
+        td { border: 1px solid #000; padding: 0; font-size: 10px; white-space: nowrap; font-weight: 700; height: 28px; vertical-align: middle; }
 
         tbody tr:nth-child(even) { background-color: #f1f5f9; }
         tbody tr:nth-child(odd) { background-color: #ffffff; }
@@ -80,7 +89,6 @@
         .master-col { border-right: 1px solid #cbd5e1; padding: 6px; background: #f8fafc; }
         .master-col:last-child { border-right: none; background: #fffbeb; }
 
-        /* Broker specific suggestion UI - Wider for multiple vendors */
         .broker-suggestion { width: 450px !important; display: block !important; }
         .broker-body { padding: 8px; display: block !important; max-height: 380px; overflow-y: auto; }
         .broker-row { padding: 8px; border: 1px solid #e2e8f0; border-radius: 8px; background: white; margin-bottom: 6px; transition: all 0.2s; }
@@ -94,7 +102,7 @@
         .tag-m2 { background-color: #d97706; color: white; }
         .tag-m3 { background-color: #10b981; color: white; }
         
-        .select-btn { font-size: 9px; font-weight: 800; padding: 4px 8px; border-radius: 6px; text-transform: uppercase; transition: all 0.2s; border: 1px solid transparent; cursor: pointer; display: inline-block; }
+        .select-btn { font-size: 9px; font-weight: 800; padding: 4px 8px; border-radius: 6px; text-transform: uppercase; border: 1px solid transparent; cursor: pointer; display: inline-block; }
         .select-btn-blue { background: #dbeafe; color: #1e40af; border-color: #bfdbfe; }
         .select-btn-blue:hover { background: #2563eb; color: white; }
         .select-btn-amber { background: #fef3c7; color: #92400e; border-color: #fde68a; }
@@ -117,6 +125,18 @@
             white-space: nowrap;
             animation: marquee 12s linear infinite;
         }
+
+        /* Login & Loading UI */
+        .login-bg { background: radial-gradient(circle, #1e293b 0%, #0f172a 100%); height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .login-card { background: white; border-radius: 20px; border: 4px solid #3b82f6; padding: 40px; width: 320px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); text-align: center; }
+
+        .loading-overlay { background: #f8fafc; height: 100vh; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+        .loading-box { background: white; padding: 30px; border-radius: 15px; border: 2px solid #3b82f6; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; max-width: 300px; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #3b82f6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 15px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .latest-job-highlight { background-color: #fff9db !important; border: 2px solid #eab308 !important; }
+        .new-file-badge { background-color: #ef4444; color: white; padding: 2px 6px; border-radius: 4px; font-size: 7px; font-weight: 900; animation: pulse 2s infinite; margin-left: 10px; }
     </style>
 </head>
 <body>
@@ -125,6 +145,7 @@
     <script type="text/babel">
         const { useState, useRef, useMemo, useEffect } = React;
 
+        // Firebase Configuration
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
             apiKey: "AIzaSyDVBKC6l1iQ4DB83ppyBoyBvcgCU5gfi68",
             authDomain: "mybillingapp-38c65.firebaseapp.com",
@@ -139,12 +160,16 @@
         const db = firebase.firestore();
         const auth = firebase.auth();
 
-        const formatDate = () => {
+        const formatDateTime = () => {
             const d = new Date();
-            return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getFullYear()).slice(-2)}`;
+            const dateStr = `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getFullYear()).slice(-2)}`;
+            const timeStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}:${String(d.getSeconds()).padStart(2, '0')}`;
+            return `${dateStr} ${timeStr}`;
         };
 
         const App = () => {
+            const [isLoggedIn, setIsLoggedIn] = useState(false);
+            const [passInput, setPassInput] = useState("");
             const [user, setUser] = useState(null);
             const [view, setView] = useState('billing'); 
             const [records, setRecords] = useState([]);
@@ -154,37 +179,26 @@
             const [master3, setMaster3] = useState([]); 
             const [savedJobs, setSavedJobs] = useState([]); 
             const [isUploaded, setIsUploaded] = useState(false);
+            const [isEditMode, setIsEditMode] = useState(false); 
+            const [mastersUnlocked, setMastersUnlocked] = useState(false);
+            const [mastersLoading, setMastersLoading] = useState(false); 
             const [syncing, setSyncing] = useState(false);
             const [search, setSearch] = useState({ show: false, m1List: [], m2List: [], m3List: [], row: null, field: null });
             
             const [showSaveModal, setShowSaveModal] = useState(false);
             const [showHomeModal, setShowHomeModal] = useState(false);
             const [showUpdateModal, setShowUpdateModal] = useState(false);
+            const [showPasswordModal, setShowPasswordModal] = useState({ open: false, target: null, data: null });
             
             const [jobNameInput, setJobNameInput] = useState("");
             const [activeJobName, setActiveJobName] = useState("");
             const [isSaving, setIsSaving] = useState(false);
             const [saveProgress, setSaveProgress] = useState(0);
-            
             const [afterSaveRedirect, setAfterSaveRedirect] = useState(null);
 
-            const SERIAL_HEADERS = [
-                "Serial No.", "SMTP/Forwarding No.", "SMTP/Forwarding Date", "SMTP Received Date", "Vessel Name", 
-                "Voyage Number", "Discharge Date", "BL Number", "Terminal", "Container Number", 
-                "Cabotage Flag(C)", "Container Type", "F/E", "Cargo Commodity", "Description", 
-                "Customer Commodity", "Packages", "Shippin Line Code", "Description 1", "Bill to Party Code", 
-                "Shipper Code", "Description 2", "Consignee Code", "Description 3", "Tare wt", 
-                "Cargo Weight", "Booking Location", "Origin Location", "Destination Location", "Handover Location", 
-                "Lineseal", "Customs Seal", "EXIM (Import/Export)", "Minimum Termperature", "Maximum temperature", 
-                "HAZ/NON Haz", "UNNO", "Class", "IMCO", "Container Owner", 
-                "Place of Supply", "Invoice Type", "WO Number", "Tarrif Type", "Export Gate In Date", 
-                "LEO Issued date", "LEO Received Date", "SB Number", "SB Date", "Export Invoice Numbe", 
-                "Export Invoice Date", "Broker 1 Code", "Broker 1 Name", "Broker 2 Code", "Broker 2 Name", 
-                "Broker 3 Code", "Broker 3 Name", "Empty Pickup Locatio", "Loaded Pickup Locati", "EDI Code", 
-                "Remark", "HSN CODE", "Trip Type", "Unique Key", "CS Tariff(Y/N)", 
-                "GR Vendor Code", "ICD Billing", "Line A/c", "CHA"
-            ];
+            const SERIAL_HEADERS = ["Serial No.", "SMTP/Forwarding No.", "SMTP/Forwarding Date", "SMTP Received Date", "Vessel Name", "Voyage Number", "Discharge Date", "BL Number", "Terminal", "Container Number", "Cabotage Flag(C)", "Container Type", "F/E", "Cargo Commodity", "Description", "Customer Commodity", "Packages", "Shippin Line Code", "Description 1", "Bill to Party Code", "Shipper Code", "Description 2", "Consignee Code", "Description 3", "Tare wt", "Cargo Weight", "Booking Location", "Origin Location", "Destination Location", "Handover Location", "Lineseal", "Customs Seal", "EXIM (Import/Export)", "Minimum Termperature", "Maximum temperature", "HAZ/NON Haz", "UNNO", "Class", "IMCO", "Container Owner", "Place of Supply", "Invoice Type", "WO Number", "Tarrif Type", "Export Gate In Date", "LEO Issued date", "LEO Received Date", "SB Number", "SB Date", "Export Invoice Numbe", "Export Invoice Date", "Broker 1 Code", "Broker 1 Name", "Broker 2 Code", "Broker 2 Name", "Broker 3 Code", "Broker 3 Name", "Empty Pickup Locatio", "Loaded Pickup Locati", "EDI Code", "Remark", "HSN CODE", "Trip Type", "Unique Key", "CS Tariff(Y/N)", "GR Vendor Code", "ICD Billing", "Line A/c", "CHA"];
 
+            // Auth & Init
             useEffect(() => {
                 const initAuth = async () => {
                     try {
@@ -193,10 +207,7 @@
                         } else {
                             await auth.signInAnonymously();
                         }
-                    } catch (err) {
-                        console.error("Auth failed, retrying...", err);
-                        setTimeout(initAuth, 2000);
-                    }
+                    } catch (err) { setTimeout(initAuth, 2000); }
                 };
                 initAuth();
                 const unsubscribe = auth.onAuthStateChanged(u => setUser(u));
@@ -204,41 +215,67 @@
             }, []);
 
             useEffect(() => {
-                if (user) {
+                if (user && isLoggedIn) {
                     loadMasters();
-                    fetchSavedJobs();
+                    const unsub = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('billing_jobs')
+                        .onSnapshot(snap => {
+                            const list = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+                                .sort((a, b) => (b.modifiedMs || 0) - (a.modifiedMs || 0));
+                            setSavedJobs(list);
+                        }, err => console.error("Archive sync error:", err));
+                    return () => unsub();
                 }
-            }, [user]);
-
-            const fetchSavedJobs = async () => {
-                if (!user) return;
-                try {
-                    const snap = await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('billing_jobs').get();
-                    const list = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    setSavedJobs(list);
-                } catch (e) { console.error("Job Fetch Error", e); }
-            };
+            }, [user, isLoggedIn]);
 
             const loadMasters = async () => {
                 if (!user) return;
-                setSyncing(true);
+                setMastersLoading(true);
                 try {
                     const m1Snap = await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('master1_chunks').get();
-                    let m1Data = [];
-                    m1Snap.forEach(doc => { m1Data = m1Data.concat(doc.data().rows || []); });
+                    let m1Data = []; m1Snap.forEach(doc => { m1Data = m1Data.concat(doc.data().rows || []); });
                     setMaster1(m1Data);
                     
                     const m2Snap = await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('master2_chunks').get();
-                    let m2Data = [];
-                    m2Snap.forEach(doc => { m2Data = m2Data.concat(doc.data().rows || []); });
+                    let m2Data = []; m2Snap.forEach(doc => { m2Data = m2Data.concat(doc.data().rows || []); });
                     setMaster2(m2Data);
 
                     const m3Snap = await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('master3_chunks').get();
-                    let m3Data = [];
-                    m3Snap.forEach(doc => { m3Data = m3Data.concat(doc.data().rows || []); });
+                    let m3Data = []; m3Snap.forEach(doc => { m3Data = m3Data.concat(doc.data().rows || []); });
                     setMaster3(m3Data);
-                } catch (e) { console.warn("Load Error", e); }
-                setSyncing(false);
+                } catch (e) { console.error("Master Load Error:", e); }
+                setMastersLoading(false);
+            };
+
+            const displayOrder = useMemo(() => {
+                if (!records.length) return [];
+                const indices = records.map((_, i) => i);
+                return indices.sort((a, b) => {
+                    const valA = (records[a]['Shipper Code'] || "").toString().trim().toLowerCase();
+                    const valB = (records[b]['Shipper Code'] || "").toString().trim().toLowerCase();
+                    return valA.localeCompare(valB);
+                });
+            }, [records, isUploaded, activeJobName]);
+
+            const handleLogin = () => {
+                if (passInput === "HTPL@123") { setIsLoggedIn(true); setPassInput(""); }
+                else { alert("Wrong Password!"); }
+            };
+
+            const checkSecondaryPassword = (inputPass, target, extraData) => {
+                if (target === 'delete') {
+                    if (inputPass === "4209211") {
+                        executeDelete(extraData);
+                        setShowPasswordModal({ open: false });
+                        setPassInput("");
+                    } else { alert("Wrong Password for Delete!"); }
+                    return;
+                }
+                if (inputPass === "16111980") {
+                    if (target === 'masters') { setMastersUnlocked(true); setView('masters'); }
+                    else if (target === 'edit') setIsEditMode(true);
+                    setShowPasswordModal({ open: false });
+                    setPassInput("");
+                } else { alert("Incorrect Password!"); }
             };
 
             const saveMasters = async (type, data) => {
@@ -247,206 +284,141 @@
                 try {
                     const collectionName = type === 'm1' ? 'master1_chunks' : type === 'm2' ? 'master2_chunks' : 'master3_chunks';
                     const chunkSize = 800;
-                    const chunks = [];
                     for (let i = 0; i < data.length; i += chunkSize) {
-                        chunks.push(data.slice(i, i + chunkSize));
+                        const chunkId = `chunk_${Math.floor(i / chunkSize)}`;
+                        await db.collection('artifacts').doc(appId).collection('public').doc('data').collection(collectionName).doc(chunkId).set({ rows: data.slice(i, i + chunkSize) });
                     }
-                    for (let i = 0; i < chunks.length; i++) {
-                        await db.collection('artifacts').doc(appId).collection('public').doc('data').collection(collectionName).doc(`chunk_${i}`).set({ rows: chunks[i] });
-                    }
-                    if (type === 'm1') setMaster1(data);
-                    else if (type === 'm2') setMaster2(data);
-                    else setMaster3(data);
-                    alert(`Master ${type.toUpperCase()} saved!`);
+                    alert(`Master ${type.toUpperCase()} Saved!`);
+                    loadMasters();
                 } catch (e) { alert("Save Error: " + e.message); }
                 setSyncing(false);
             };
 
             const saveCurrentJob = async () => {
-                if (!user) return;
-                const name = jobNameInput.trim();
-                if (!name || isSaving) return;
-                
+                if (!user || !jobNameInput.trim()) return;
                 setIsSaving(true);
                 setSaveProgress(10);
-
                 try {
-                    const docRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('billing_jobs').doc(name);
-                    const existingDoc = await docRef.get();
-                    setSaveProgress(30);
-                    
-                    const now = formatDate();
-                    let payload = {
-                        records: records,
-                        headers: headers,
-                        lastModified: now
-                    };
-
-                    if (existingDoc.exists) {
-                        payload.createdOn = existingDoc.data().createdOn || now;
-                        payload.isUpdate = true;
-                    } else {
-                        payload.createdOn = now;
-                        payload.isUpdate = false;
-                    }
-                    
-                    setSaveProgress(60);
-                    await docRef.set(payload);
-                    setSaveProgress(90);
-
+                    const docRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('billing_jobs').doc(jobNameInput.trim());
+                    const existing = await docRef.get();
+                    const now = formatDateTime();
+                    const ms = Date.now();
+                    await docRef.set({ records, lastModified: now, modifiedMs: ms, createdOn: existing.exists ? existing.data().createdOn : now, isUpdate: existing.exists });
                     setShowSaveModal(false);
-                    setActiveJobName(name);
-                    await fetchSavedJobs();
-                    
+                    setActiveJobName(jobNameInput.trim());
+                    setIsEditMode(false); 
                     setSaveProgress(100);
-                    setTimeout(() => {
-                        setIsSaving(false);
-                        setSaveProgress(0);
-                        if (afterSaveRedirect === 'home') {
-                            resetToHome();
-                        } else {
-                            setIsUploaded(true);
-                        }
-                        setAfterSaveRedirect(null);
-                    }, 500);
-                } catch (e) { 
-                    alert("Job Save Error: " + e.message); 
-                    setIsSaving(false);
-                    setSaveProgress(0);
-                }
+                    setTimeout(() => { if (afterSaveRedirect === 'home') resetToHome(); else setIsUploaded(true); setIsSaving(false); setSaveProgress(0); }, 500);
+                } catch (e) { alert("Save Error: " + e.message); setIsSaving(false); }
             };
 
-            const resetToHome = () => {
-                setRecords([]);
-                setHeaders([]);
-                setIsUploaded(false);
-                setActiveJobName("");
-                setView('billing');
-                setShowHomeModal(false);
-            };
+            const resetToHome = () => { setRecords([]); setIsUploaded(false); setActiveJobName(""); setView('billing'); setIsEditMode(false); setShowHomeModal(false); };
+            const loadJob = (job) => { setRecords(job.records || []); setIsUploaded(true); setActiveJobName(job.id); setIsEditMode(false); setView('billing'); };
+            const executeDelete = async (id) => { try { await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('billing_jobs').doc(id).delete(); } catch (e) { alert(e.message); } };
 
-            const loadJob = (job) => {
-                setRecords(job.records || []);
-                setHeaders(job.headers || []);
-                setIsUploaded(true);
-                setActiveJobName(job.id);
-                setView('billing');
-            };
-
-            const deleteJob = async (jobId) => {
-                if (!user) return;
-                if (!confirm("Delete this saved data?")) return;
-                setSyncing(true);
-                try {
-                    await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('billing_jobs').doc(jobId).delete();
-                    if(activeJobName === jobId) setActiveJobName(""); 
-                    await fetchSavedJobs();
-                } catch (e) { alert("Delete Error: " + e.message); }
-                setSyncing(false);
-            };
-
-            const allCols = [
+            const allColsView = [
                 { key: 'Container Number', label: 'Container Number' },
                 { key: 'Customer Commodity', label: 'Customer Commodity' },
                 { key: 'Description 1', label: 'Description 1' },
                 { key: 'Bill to Party Code', label: 'Bill to Party Code' },
                 { key: 'Shipper Code', label: 'Shipper Code' },
+                { key: 'Unique Key', label: 'Unique Key' },
                 { key: 'HAZ/NON Haz', label: 'HAZ/NON Haz' },
                 { key: 'Broker 1 Name', label: 'Broker 1 Name' },
                 { key: 'Broker 2 Name', label: 'Broker 2 Name' },
                 { key: 'Broker 3 Name', label: 'Broker 3 Name' },
-                { key: 'Unique Key', label: 'Unique Key' },
                 { key: 'ICD Billing', label: 'ICD Billing' },
                 { key: 'Line A/c', label: 'Line A/c' },
                 { key: 'CHA', label: 'CHA' }
             ];
 
             const wideCols = ['Shipper Code', 'Broker 1 Name', 'Broker 2 Name', 'Broker 3 Name', 'CHA', 'ICD Billing'];
-            const editableFields = ['Bill to Party Code', 'Shipper Code', 'Broker 1 Name', 'Broker 2 Name', 'Broker 3 Name', 'Unique Key', 'ICD Billing', 'Line A/c', 'CHA'];
+            const editableFields = ['Bill to Party Code', 'Shipper Code', 'Broker 1 Name', 'Broker 2 Name', 'Broker 3 Name', 'ICD Billing', 'Line A/c', 'CHA'];
 
-            const onFileUp = (e, type) => {
-                const f = e.target.files[0];
-                if (!f) return;
-                const r = new FileReader();
-                r.onload = (ev) => {
-                    const dataRaw = ev.target.result;
-                    const workbook = XLSX.read(dataRaw, { type: 'binary' });
-                    const firstSheet = workbook.SheetNames[0];
-                    
-                    if (type === 'bill') {
-                        const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet], { defval: "" });
-                        const sheetHeaders = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet], { header: 1 })[0];
-                        setRecords(jsonData);
-                        setHeaders(sheetHeaders);
-                        setJobNameInput("");
-                        setShowSaveModal(true);
-                    }
-                    else if (type === 'update_line_cha') {
-                        const rows = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet], { header: 1 });
-                        let matchedCount = 0;
-                        const updatedRecords = records.map(record => {
-                            const mainContainer = (record['Container Number'] || '').toString().trim();
-                            if (!mainContainer) return record;
-                            const match = rows.slice(1).find(row => (row[7] || '').toString().trim() === mainContainer);
-                            if (match) {
-                                matchedCount++;
-                                return { ...record, 'Line A/c': (match[33] || '').toString().trim(), 'CHA': (match[31] || '').toString().trim() };
-                            }
-                            return record;
-                        });
-                        setRecords(updatedRecords);
-                        setShowUpdateModal(false);
-                        alert(`Update Complete! Matched & Updated ${matchedCount} Containers.`);
-                    }
-                    else {
-                        const rows = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet], { header: 1 });
-                        const hRaw = rows[0];
-                        if (type === 'm1') {
-                            const vtIdx = hRaw.findIndex(h => h && h.toString().toLowerCase().includes("valid to"));
-                            const filtered = rows.slice(1).map(v => ({
-                                "Cost Sheet No": (v[1] || '').toString().trim(),
-                                "Bill to Party": (v[2] || '').toString().trim(),
-                                "LineDesc": (v[3] || '').toString().trim(),
-                                "Shipper Code": (v[4] || '').toString().trim(),
-                                "Description": (v[5] || '').toString().trim(),
-                                "Valid To": vtIdx > -1 ? (v[vtIdx] || '').toString().trim() : ''
-                            })).filter(x => x.Description);
-                            setMaster1(filtered);
-                        } else if (type === 'm2') {
-                            const filtered = rows.slice(1).map(v => ({
-                                "Customer": (v[2] || '').toString().trim(),
-                                "customer Name": (v[4] || '').toString().trim(),
-                                "Address": (v[5] || '').toString().trim(),
-                                "Street 2": (v[6] || '').toString().trim(),
-                                "Street 4": (v[8] || '').toString().trim()
-                            })).filter(x => x['customer Name']);
-                            setMaster2(filtered);
-                        } else if (type === 'm3') {
-                            const filtered = rows.slice(1).map(v => ({
-                                "Vendor1": (v[0] || '').toString().trim(),
-                                "Vendor2": (v[1] || '').toString().trim(),
-                                "Vendor3": (v[2] || '').toString().trim()
-                            })).filter(x => x.Vendor1 || x.Vendor2 || x.Vendor3);
-                            setMaster3(filtered);
+            const downloadGeneric = (data, filename) => {
+                const processed = data.map(row => {
+                    const nr = { ...row };
+                    // Logic for Line A/c: Blank if 0 or empty
+                    if (!nr['Line A/c'] || nr['Line A/c'] === 0 || nr['Line A/c'] === '0') nr['Line A/c'] = "";
+                    // Place of Supply: Removed '03 default logic as requested. 
+                    // No automatic update here anymore.
+                    return nr;
+                });
+                const ws = XLSX.utils.json_to_sheet(processed, { header: SERIAL_HEADERS });
+                
+                // Auto-fit Logic
+                const range = XLSX.utils.decode_range(ws['!ref']);
+                ws['!cols'] = SERIAL_HEADERS.map(h => ({ wch: 22 }));
+                
+                // Styling logic for Excel Download
+                for (let R = range.s.r; R <= range.e.r; ++R) {
+                    for (let C = range.s.c; C <= range.e.c; ++C) {
+                        const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
+                        
+                        // Initialize cell if not exists to apply borders
+                        if (!ws[cellRef]) ws[cellRef] = { v: "" };
+                        if (!ws[cellRef].s) ws[cellRef].s = {};
+                        
+                        // Universal Calibri 11 Bold
+                        ws[cellRef].s.font = { name: "Calibri", sz: 11, bold: true };
+                        
+                        // Full Grid Borders (Fixed BO border issue here)
+                        ws[cellRef].s.border = {
+                            top: { style: "thin", color: { rgb: "000000" } },
+                            bottom: { style: "thin", color: { rgb: "000000" } },
+                            left: { style: "thin", color: { rgb: "000000" } },
+                            right: { style: "thin", color: { rgb: "000000" } }
+                        };
+
+                        // Header Row (R=0) Styling: DARK SKY BLUE
+                        if (R === 0) {
+                            ws[cellRef].s.fill = { fgColor: { rgb: "33A1DE" } }; 
+                            ws[cellRef].s.font.color = { rgb: "FFFFFF" };       
                         }
                     }
-                };
-                r.readAsBinaryString(f);
+                }
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "BillingData");
+                XLSX.writeFile(wb, `${filename || 'SAP_EXPORT'}.xlsx`);
+            };
+
+            const downloadFinal = () => downloadGeneric(records, activeJobName || `FINAL_EXPORT_${Date.now()}`);
+
+            const handleHomeClick = () => { if (isUploaded) setShowHomeModal(true); else setView('billing'); };
+            const handleMastersClick = () => { if (mastersUnlocked) setView('masters'); else setShowPasswordModal({ open: true, target: 'masters' }); };
+            const handleEditClick = () => setShowPasswordModal({ open: true, target: 'edit' });
+            
+            const handleKeyDown = (e, uiIdx, col) => { 
+                if (e.key === 'Enter') { 
+                    e.preventDefault(); 
+                    setSearch(prev => ({ ...prev, show: false })); 
+                    const next = uiIdx + 1; 
+                    if (next < displayOrder.length) { 
+                        const el = document.getElementById(`input-${next}-${col}`); 
+                        if(el) el.focus(); 
+                    } 
+                } 
             };
 
             const handleTyping = (idx, key, val) => {
-                const up = [...records];
-                up[idx][key] = val;
-                setRecords(up);
+                const up = [...records]; up[idx][key] = val; setRecords(up);
                 if (val.length > 1) {
                     const q = val.toLowerCase();
                     if (['Bill to Party Code', 'Shipper Code'].includes(key)) {
-                        const m1MatchesRaw = master1.filter(m => (m.Description && m.Description.toLowerCase().includes(q)) || (m.LineDesc && m.LineDesc.toLowerCase().includes(q)) || (m['Bill to Party'] && m['Bill to Party'].toString().toLowerCase().includes(q)));
+                        const m1MatchesRaw = master1.filter(m => 
+                            (m.Description && m.Description.toLowerCase().includes(q)) || 
+                            (m.LineDesc && m.LineDesc.toLowerCase().includes(q)) || 
+                            (m['Bill to Party'] && m['Bill to Party'].toString().toLowerCase().includes(q))
+                        );
                         const m1UniqueMap = new Map();
                         m1MatchesRaw.forEach(m => {
                             const uk = `${m.Description}-${m.LineDesc}-${m['Cost Sheet No']}-${m['Valid To']}`;
                             if (!m1UniqueMap.has(uk)) {
-                                m1UniqueMap.set(uk, { name: m.Description, lineDesc: m.LineDesc, btp: m['Bill to Party'], sc: m['Shipper Code'], vt: m['Valid To'], cs: m['Cost Sheet No'], type: 'M1' });
+                                m1UniqueMap.set(uk, { 
+                                    name: m.Description, lineDesc: m.LineDesc, 
+                                    btp: m['Bill to Party'], sc: m['Shipper Code'], 
+                                    vt: m['Valid To'], cs: m['Cost Sheet No'], type: 'M1' 
+                                });
                             }
                         });
                         const m1Res = Array.from(m1UniqueMap.values()).sort((a, b) => {
@@ -455,7 +427,14 @@
                             const [d2, m2, y2] = b.vt.split('-').map(Number);
                             return new Date(y2, m2-1, d2) - new Date(y1, m1-1, d1);
                         }).slice(0, 15);
-                        const m2Res = master2.filter(m => (m['customer Name'] && m['customer Name'].toLowerCase().includes(q)) || (m['Customer'] && m['Customer'].toString().toLowerCase().includes(q))).map(m => ({ name: m['customer Name'], btp: m['Customer'], sc: m['Customer'], addr: m.Address, s2: m['Street 2'], s4: m['Street 4'], type: 'M2' })).slice(0, 15);
+
+                        const m2Res = master2.filter(m => 
+                            (m['customer Name'] && m['customer Name'].toLowerCase().includes(q)) || 
+                            (m['Customer'] && m['Customer'].toString().toLowerCase().includes(q))
+                        ).map(m => ({ 
+                            name: m['customer Name'], btp: m['Customer'], sc: m['Customer'], addr: m.Address, s2: m['Street 2'], s4: m['Street 4'], type: 'M2' 
+                        })).slice(0, 15);
+
                         setSearch({ show: true, m1List: m1Res, m2List: m2Res, m3List: [], row: idx, field: key });
                     }
                     else if (['Broker 1 Name', 'Broker 2 Name', 'Broker 3 Name'].includes(key)) {
@@ -466,7 +445,6 @@
                         ).slice(0, 15);
                         setSearch({ show: true, m1List: [], m2List: [], m3List: matchedRows, row: idx, field: key });
                     }
-                    else setSearch({ ...search, show: false });
                 } else setSearch({ ...search, show: false });
             };
 
@@ -491,89 +469,82 @@
                 setSearch(prev => ({ ...prev, show: false }));
             };
 
-            // MODIFIED: Added instruction to hide search modal on Enter
-            const handleKeyDown = (e, rowIdx, colKey) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
+            const onFileUp = (e, type) => {
+                const f = e.target.files[0]; if (!f) return;
+                const r = new FileReader();
+                r.onload = (ev) => {
+                    const workbook = XLSX.read(ev.target.result, { type: 'binary' });
+                    const firstSheet = workbook.SheetNames[0];
+                    const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet], { defval: "" });
                     
-                    // Hide Suggestion Box on Enter
-                    setSearch(prev => ({ ...prev, show: false }));
-
-                    const nextRowIdx = rowIdx + 1;
-                    if (nextRowIdx < records.length) {
-                        const nextInput = document.getElementById(`input-${nextRowIdx}-${colKey}`);
-                        if (nextInput) nextInput.focus();
+                    if (type === 'bill') { setRecords(jsonData); setShowSaveModal(true); setIsEditMode(true); }
+                    else if (type === 'update_line_cha') {
+                        const rows = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet], { header: 1 });
+                        let count = 0;
+                        const updated = records.map(rec => {
+                            const match = rows.find(row => (row[7]||'').toString() === (rec['Container Number']||'').toString());
+                            if (match) { count++; return { ...rec, 'Line A/c': match[33]||'', 'CHA': match[31]||'' }; }
+                            return rec;
+                        });
+                        setRecords(updated); setShowUpdateModal(false); alert(`Updated ${count} Rows.`);
                     }
-                }
+                    else if (type === 'm1') setMaster1(jsonData.map(v => ({ "Cost Sheet No": v["Cost Sheet No"], "Bill to Party": v["Bill to Party"], "LineDesc": v["LineDesc"], "Shipper Code": v["Shipper Code"], "Description": v["Description"], "Valid To": v["Valid To"] })));
+                    else if (type === 'm2') setMaster2(jsonData.map(v => ({ "Customer": v["Customer"], "customer Name": v["customer Name"], "Address": v["Address"], "Street 2": v["Street 2"], "City": v["City"] })));
+                    else if (type === 'm3') setMaster3(jsonData.map(v => ({ "Vendor1": v["Commission Vendor 1"], "Vendor2": v["Commission Vendor 2"], "Vendor3": v["Commission Vendor 3"] })));
+                };
+                r.readAsBinaryString(f);
             };
 
-            const downloadGeneric = (data, filename) => {
-                const ws = XLSX.utils.json_to_sheet(data, { header: SERIAL_HEADERS });
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, "BillingData");
-                XLSX.writeFile(wb, `${filename || 'EXPORT'}.xlsx`);
-            };
-
-            const downloadFinal = () => {
-                const fileName = activeJobName || `SAP_FINAL_EXPORT_${formatDate()}`;
-                downloadGeneric(records, fileName);
-            };
-
-            const handleHomeClick = () => {
-                if (isUploaded && records.length > 0) setShowHomeModal(true);
-                else { setView('billing'); setIsUploaded(false); }
-            };
-
-            if (!user) {
-                return <div className="h-screen flex flex-col items-center justify-center bg-slate-900 text-white font-black uppercase"><div className="animate-pulse mb-4 text-sm tracking-widest text-blue-400">Connecting to Cloud Backend...</div></div>;
-            }
+            if (!isLoggedIn) return (<div className="login-bg"><div className="login-card"><h1 className="text-xl font-black mb-2 uppercase tracking-tighter">HTPL SAP Login</h1><input type="password" value={passInput} onChange={(e)=>setPassInput(e.target.value)} onKeyDown={(e)=>e.key==='Enter'&&handleLogin()} className="w-full bg-slate-100 p-4 rounded-xl border-2 mb-6 text-center" autoFocus placeholder="Password" /><button onClick={handleLogin} className="w-full bg-blue-600 text-white py-4 rounded-xl font-black uppercase tracking-widest">Start System</button></div></div>);
+            if (mastersLoading) return (<div className="loading-overlay"><div className="loading-box"><div className="spinner"></div><h2 className="text-sm font-black uppercase tracking-tighter">PLEASE WAIT</h2><p className="text-[10px] font-bold text-blue-600 uppercase">Masters are Loading.....</p></div></div>);
 
             return (
                 <div className="h-screen flex flex-col overflow-hidden" onClick={() => setSearch({ ...search, show: false })}>
                     <nav className="bg-slate-900 text-white p-2 flex justify-between items-center border-b-2 border-blue-600 shadow-xl z-50">
-                        <div className="flex items-center gap-4 pl-2 font-black uppercase tracking-tighter">
-                            <span className="text-sm text-blue-400 italic">SAP Billing Pro</span>
+                        <div className="flex items-center gap-2 font-black uppercase">
+                            <span className="text-blue-400 italic px-2">SAP Billing Pro</span>
                             <div className="flex bg-slate-800 rounded p-0.5 text-[8px]">
-                                <button onClick={handleHomeClick} className={`px-4 py-1.5 rounded transition-all hover:bg-slate-700`}>HOME</button>
-                                <button onClick={() => setView('billing')} className={`px-4 py-1.5 rounded transition-all ${view === 'billing' ? 'bg-blue-600' : 'text-slate-400'}`}>PORTAL</button>
-                                <button onClick={() => { if(!isUploaded) return alert("Upload billing file first!"); setShowUpdateModal(true); }} className={`px-4 py-1.5 rounded transition-all bg-emerald-600 hover:bg-emerald-500 ml-1 uppercase`}>Update "Line A/c / CHA"</button>
-                                <button onClick={() => setView('masters')} className={`px-4 py-1.5 rounded transition-all ${view === 'masters' ? 'bg-blue-600' : 'text-slate-400'}`}>MASTERS</button>
-                                <button onClick={() => setView('saved')} className={`px-4 py-1.5 rounded transition-all ${view === 'saved' ? 'bg-blue-600' : 'text-slate-400'}`}>SAP FILES</button>
+                                <button onClick={handleHomeClick} className="px-4 py-1.5 rounded hover:bg-slate-700 transition-all">HOME</button>
+                                <button onClick={() => setView('billing')} className={`px-4 py-1.5 rounded transition-all ${view === 'billing' ? 'bg-blue-600':'text-slate-400'}`}>PORTAL</button>
+                                <button onClick={() => { if(!isUploaded) return alert("Upload billing file first!"); setShowUpdateModal(true); }} className="px-4 py-1.5 rounded bg-emerald-600 hover:bg-emerald-500 ml-1 uppercase transition-all">Update "Line A/c / CHA"</button>
+                                <button onClick={handleMastersClick} className={`px-4 py-1.5 rounded transition-all ${view === 'masters' ? 'bg-blue-600':'text-slate-400'}`}>MASTERS</button>
+                                <button onClick={() => setView('saved')} className={`px-4 py-1.5 rounded transition-all ${view === 'saved' ? 'bg-blue-600':'text-slate-400'}`}>SAP FILES</button>
+                                {view === 'billing' && isUploaded && !isEditMode && <button onClick={handleEditClick} className="px-4 py-1.5 rounded bg-red-600 animate-pulse ml-2 shadow-lg">EDIT MODE</button>}
                             </div>
                         </div>
-                        <div className="flex items-center gap-3 pr-2"><button onClick={() => { setJobNameInput(activeJobName); setShowSaveModal(true); }} className="bg-blue-600 px-4 py-1.5 rounded text-[9px] font-black uppercase hover:bg-blue-500 transition-all shadow-lg">SAVE WORK</button></div>
+                        <button onClick={() => { setJobNameInput(activeJobName); setShowSaveModal(true); }} className="bg-blue-600 px-4 py-1.5 rounded text-[9px] font-black uppercase hover:bg-blue-500 shadow-lg">SAVE WORK</button>
                     </nav>
 
                     <div className="flex-1 flex flex-col overflow-hidden relative">
                         {view === 'saved' ? (
                             <div className="p-8 max-w-4xl mx-auto w-full h-full overflow-y-auto custom-scrollbar">
-                                <div className="bg-white rounded-[20px] shadow-2xl p-8 border-2 border-black">
-                                    <h2 className="text-xs font-black uppercase text-slate-800 mb-6 border-b-2 border-black pb-2 tracking-widest text-center italic">SAP Cloud Archive - List Box</h2>
-                                    <div className="grid grid-cols-1 gap-4">
-                                        {savedJobs.length > 0 ? savedJobs.map((job) => (
-                                            <div key={job.id} className="p-4 bg-slate-50 border border-black rounded-xl flex justify-between items-center group hover:bg-emerald-50 transition-all">
-                                                <div>
-                                                    <div className="font-black text-xs text-slate-900 uppercase">{job.id}</div>
-                                                    <div className="flex gap-3 mt-1 text-[8px] font-bold uppercase"><span className="text-slate-500">Rows: {job.records?.length || 0}</span><span className="text-blue-600">Saved on {job.createdOn}</span>{job.isUpdate && <span className="text-emerald-600 ml-2 border-l border-slate-300 pl-2">Updated on {job.lastModified}</span>}</div>
+                                <div className="bg-white rounded-3xl p-8 border-2 border-black shadow-2xl">
+                                    <h2 className="text-xs font-black uppercase mb-6 text-center italic border-b-2 pb-2">SAP Cloud Archive - List Box</h2>
+                                    <div className="grid gap-4">
+                                        {savedJobs.map((job, idx) => (
+                                            <div key={job.id} className={`p-4 border-2 rounded-xl flex justify-between items-center group transition-all ${idx === 0 ? 'latest-job-highlight border-emerald-500 shadow-lg':'bg-slate-50 border-black'}`}>
+                                                <div className="flex-1">
+                                                    <div className="flex items-center gap-2"><div className="font-black text-xs uppercase">{job.id}</div>{idx === 0 && <span className="new-file-badge">NEW FILE</span>}</div>
+                                                    <div className="text-[8px] font-bold uppercase text-slate-500 mt-1">Saved: {job.createdOn} | Rows: {job.records?.length}</div>
                                                 </div>
                                                 <div className="flex gap-2">
-                                                    <button onClick={() => loadJob(job)} className="bg-slate-900 text-white px-4 py-2 rounded-lg text-[8px] font-black hover:bg-blue-700 uppercase">Load File</button>
-                                                    <button onClick={() => downloadGeneric(job.records, job.id)} className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-[8px] font-black hover:bg-emerald-700 uppercase">Download</button>
-                                                    <button onClick={() => deleteJob(job.id)} className="bg-white text-red-600 border border-red-600 px-4 py-2 rounded-lg text-[8px] font-black hover:bg-red-600 hover:text-white uppercase">Delete</button>
+                                                    <button onClick={() => loadJob(job)} className="bg-slate-900 text-white px-4 py-2 rounded-lg text-[8px] font-black uppercase hover:bg-blue-700 transition-all">Load</button>
+                                                    <button onClick={() => downloadGeneric(job.records, job.id)} className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-[8px] font-black hover:bg-emerald-700 transition-all">Download</button>
+                                                    <button onClick={() => setShowPasswordModal({ open: true, target: 'delete', data: job.id })} className="text-red-600 px-4 py-2 text-[8px] font-black uppercase border border-red-600 rounded-lg hover:bg-red-50 transition-all">Delete</button>
                                                 </div>
                                             </div>
-                                        )) : <div className="p-12 text-center text-slate-400 font-bold italic uppercase tracking-widest">No SAP Files found.</div>}
+                                        ))}
                                     </div>
                                 </div>
                             </div>
                         ) : view === 'masters' ? (
-                            <div className="max-w-xl mx-auto w-full p-8 space-y-6 h-full overflow-y-auto custom-scrollbar">
-                                <div className="bg-white p-8 rounded-[40px] shadow-2xl border-2 border-black">
-                                    <h2 className="text-[10px] font-black mb-6 uppercase text-slate-400 border-b pb-2 tracking-widest text-center">Master Configuration</h2>
+                            <div className="max-w-xl mx-auto w-full p-8 overflow-y-auto custom-scrollbar h-full">
+                                <div className="bg-white p-8 rounded-[40px] border-2 border-black text-center shadow-2xl">
+                                    <h2 className="text-[10px] font-black uppercase mb-6 border-b pb-2 tracking-widest">Master Configuration</h2>
                                     <div className="space-y-6">
-                                        <div className="p-4 bg-blue-50/50 rounded-2xl border border-black text-center"><h3 className="font-black text-[9px] uppercase text-blue-700 mb-1 underline">Master 1 (B, C, D, E, F, CH)</h3><input type="file" onChange={(e) => onFileUp(e, 'm1')} className="text-[9px] mb-3 w-full" /><button onClick={() => saveMasters('m1', master1)} className="w-full bg-blue-600 text-white py-2 rounded-xl text-[9px] font-black uppercase shadow-lg">Save M1</button></div>
-                                        <div className="p-4 bg-amber-50/50 rounded-2xl border border-black text-center"><h3 className="font-black text-[9px] uppercase text-blue-700 mb-1 underline">Master 2 (C, E, F, G, I)</h3><input type="file" onChange={(e) => onFileUp(e, 'm2')} className="text-[9px] mb-3 w-full" /><button onClick={() => saveMasters('m2', master2)} className="w-full bg-amber-600 text-white py-2 rounded-xl text-[9px] font-black uppercase shadow-lg">Save M2</button></div>
-                                        <div className="p-4 bg-emerald-50/50 rounded-2xl border border-black text-center"><h3 className="font-black text-[9px] uppercase text-emerald-700 mb-1 underline">Master 3 (A-C: Broker Master)</h3><input type="file" onChange={(e) => onFileUp(e, 'm3')} className="text-[9px] mb-3 w-full" /><button onClick={() => saveMasters('m3', master3)} className="w-full bg-emerald-600 text-white py-2 rounded-xl text-[9px] font-black uppercase shadow-lg">Save M3</button></div>
+                                        <div className="p-4 bg-blue-50/50 rounded-2xl border border-black"><h3 className="font-black text-[9px] uppercase text-blue-700 mb-1 underline">Master 1</h3><input type="file" onChange={(e)=>onFileUp(e,'m1')} className="text-[9px] mb-3 w-full" /><button onClick={()=>saveMasters('m1',master1)} className="w-full bg-blue-600 text-white py-2 rounded-xl text-[9px] font-black uppercase shadow-md hover:bg-blue-700 transition-all">Save M1 to Cloud</button></div>
+                                        <div className="p-4 bg-amber-50/50 rounded-2xl border border-black"><h3 className="font-black text-[9px] uppercase text-blue-700 mb-1 underline">Master 2</h3><input type="file" onChange={(e)=>onFileUp(e,'m2')} className="text-[9px] mb-3 w-full" /><button onClick={()=>saveMasters('m2',master2)} className="w-full bg-amber-600 text-white py-2 rounded-xl text-[9px] font-black uppercase shadow-md hover:bg-amber-700 transition-all">Save M2 to Cloud</button></div>
+                                        <div className="p-4 bg-emerald-50/50 rounded-2xl border border-black"><h3 className="font-black text-[9px] uppercase text-emerald-700 mb-1 underline">Master 3</h3><input type="file" onChange={(e)=>onFileUp(e,'m3')} className="text-[9px] mb-3 w-full" /><button onClick={()=>saveMasters('m3',master3)} className="w-full bg-emerald-600 text-white py-2 rounded-xl text-[9px] font-black uppercase shadow-md hover:bg-emerald-700 transition-all">Save M3 to Cloud</button></div>
                                     </div>
                                 </div>
                             </div>
@@ -582,86 +553,86 @@
                                 {!isUploaded ? (
                                     <div className="flex-1 flex items-center justify-center">
                                         <div className="bg-white p-12 rounded-[50px] border-4 border-black text-center shadow-2xl max-sm overflow-hidden relative">
-                                            <h2 className="text-2xl font-black mb-6 uppercase text-slate-800 tracking-tighter italic">SAP Billing Entry</h2>
-                                            <input type="file" onChange={(e) => onFileUp(e, 'bill')} accept=".xlsx, .csv" className="hidden" id="f-up" />
-                                            <label htmlFor="f-up" className="bg-slate-900 text-white px-12 py-4 rounded-3xl font-black cursor-pointer inline-block hover:bg-blue-700 uppercase text-[10px] tracking-widest transition-all shadow-xl">Select Excel File</label>
-                                            <div className="mt-8 flex justify-center gap-4 text-[8px] font-black text-slate-400 border-t border-black pt-4 uppercase"><span>✓ M1: {master1.length}</span><span className="w-px h-3 bg-slate-200"></span><span>✓ M2: {master2.length}</span><span className="w-px h-3 bg-slate-200"></span><span>✓ M3: {master3.length}</span></div>
-                                            <div className="mt-4 w-full overflow-hidden whitespace-nowrap bg-slate-50 py-1 border-t border-b border-slate-100"><div className="scrolling-text text-[8px] font-black text-blue-600 uppercase tracking-widest">Created By Vikram Singh &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Created By Vikram Singh &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Created By Vikram Singh</div></div>
+                                            <h2 className="text-2xl font-black mb-6 uppercase text-slate-800 tracking-tighter italic decoration-blue-600 underline underline-offset-8">SAP Billing Entry</h2>
+                                            <input type="file" onChange={(e)=>onFileUp(e,'bill')} accept=".xlsx, .csv" className="hidden" id="f-up" />
+                                            <label htmlFor="f-up" className="bg-slate-900 text-white px-12 py-4 rounded-3xl font-black cursor-pointer inline-block hover:bg-blue-700 uppercase text-[10px] shadow-2xl transition-all">Select Excel File</label>
+                                            <div className="mt-8 flex justify-center gap-4 text-[8px] font-black text-slate-400 border-t pt-4 uppercase"><span>✓ M1: {master1.length}</span><span className="w-px h-3 bg-slate-200"></span><span>✓ M2: {master2.length}</span><span className="w-px h-3 bg-slate-200"></span><span>✓ M3: {master3.length}</span></div>
+                                            <div className="mt-4 w-full overflow-hidden whitespace-nowrap bg-slate-50 py-1 border-t border-b"><div className="scrolling-text text-[8px] font-black text-blue-600 uppercase tracking-widest italic tracking-tighter">Created By Vikram Singh &nbsp;&nbsp;&nbsp; Created By Vikram Singh</div></div>
                                         </div>
                                     </div>
                                 ) : (
                                     <>
                                         <div className="flex justify-between items-center mb-1 bg-white p-1 rounded-lg border-2 border-black shadow-sm px-4">
-                                            <div className="text-[9px] font-black uppercase text-slate-500 flex items-center gap-3"><span className="text-blue-600">Active Job: {activeJobName || 'Unnamed'}</span><span className="w-px h-3 bg-slate-300"></span><span>Records: {records.length}</span></div>
-                                            <button onClick={downloadFinal} className="bg-emerald-600 text-white px-6 py-1.5 rounded-lg text-[9px] font-black uppercase shadow hover:bg-emerald-700 transition-all tracking-widest italic font-bold">Download Final .xlsx (A-BQ)</button>
+                                            <div className="text-[9px] font-black uppercase text-slate-500 flex items-center gap-3">
+                                                <span className="text-blue-600 uppercase italic">File: {activeJobName || 'Unnamed'}</span>
+                                                <span className="w-px h-3 bg-slate-300"></span>
+                                                <span className={`${isEditMode ? 'text-green-600':'text-red-600'} uppercase font-black italic`}>Status: {isEditMode ? "Editing (Unlocked)" : "Read-Only (Locked)"}</span>
+                                            </div>
+                                            <button onClick={downloadFinal} className="bg-emerald-600 text-white px-6 py-1.5 rounded-lg text-[9px] font-black uppercase italic shadow hover:bg-emerald-700 transition-all font-bold">Download Final .xlsx (A-BQ)</button>
                                         </div>
-                                        <div className="bg-white rounded-lg shadow-xl border-2 border-black overflow-hidden flex-1 flex flex-col">
+                                        <div className="bg-white border-2 border-black overflow-hidden flex-1 flex flex-col shadow-inner">
                                             <div className="overflow-auto flex-1 custom-scrollbar">
                                                 <table className="w-full border-collapse">
-                                                    <thead><tr className="compact-row"><th className="sticky left-0 sticky-left-1 text-center font-black">#</th><th className="sticky left-32 sticky-left-2 shadow-sm" style={{left: '32px'}}></th>{allCols.map(c => <th key={c.key} className={`p-1.5 text-left whitespace-nowrap ${wideCols.includes(c.key) ? 'col-shipper' : ''}`}>{c.label}</th>)}</tr></thead>
+                                                    <thead><tr className="compact-row"><th className="sticky left-0 sticky-left-1 text-center font-black">#</th><th className="sticky left-32 sticky-left-2 shadow-sm" style={{left: '32px'}}></th>{allColsView.map(c => <th key={c.key} className={`p-1.5 text-left whitespace-nowrap ${wideCols.includes(c.key) ? 'col-shipper':''}`}>{c.label}</th>)}</tr></thead>
                                                     <tbody>
-                                                        {records.map((r, i) => (
-                                                            <tr key={i} className="border-b border-black compact-row transition-colors">
-                                                                <td className="p-0 text-center bg-slate-100 font-black text-slate-400 border-r border-black sticky left-0 z-40 text-[8px]">{i + 1}</td>
-                                                                <td className="p-0 text-center bg-white border-r border-black sticky left-32 z-40 shadow-sm" style={{left: '32px'}}><div className="w-full h-full flex items-center justify-center text-blue-500 opacity-20 hover:opacity-100 cursor-help"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></div></td>
-                                                                {allCols.map(c => {
-                                                                    const ed = editableFields.includes(c.key);
-                                                                    return (
-                                                                        <td key={c.key} className={`p-0 border-r border-black relative overflow-visible whitespace-nowrap ${wideCols.includes(c.key) ? 'col-shipper' : ''}`}>
-                                                                            {ed ? (
-                                                                                <>
-                                                                                    <input 
-                                                                                        id={`input-${i}-${c.key}`}
-                                                                                        type="text" 
-                                                                                        value={r[c.key] || ''} 
-                                                                                        onChange={(e) => handleTyping(i, c.key, e.target.value)} 
-                                                                                        onKeyDown={(e) => handleKeyDown(e, i, c.key)}
-                                                                                        className="w-full h-full font-bold text-blue-900" 
-                                                                                    />
-                                                                                    {search.show && search.row === i && search.field === c.key && (
-                                                                                        <div className={`suggestion-container custom-scrollbar shadow-2xl ${search.m3List.length > 0 ? 'broker-suggestion' : ''}`} onClick={(e) => e.stopPropagation()}>
-                                                                                            {search.m3List.length > 0 ? (
-                                                                                                <div className="broker-body">
-                                                                                                    <div className="bg-emerald-900 text-white p-2 font-black text-[8px] uppercase tracking-widest mb-2 border-b border-black">Master 3: Grouped Broker Match</div>
-                                                                                                    {search.m3List.map((m, bidx) => (
-                                                                                                        <div key={bidx} className="broker-row">
-                                                                                                            <div className="flex justify-between items-start">
-                                                                                                                <div className="space-y-1">
-                                                                                                                    <div className="text-[9px] font-black text-slate-800 uppercase">1. {m.Vendor1 || '-'}</div>
-                                                                                                                    <div className="text-[9px] font-black text-slate-600 uppercase">2. {m.Vendor2 || '-'}</div>
-                                                                                                                    <div className="text-[9px] font-black text-slate-600 uppercase">3. {m.Vendor3 || '-'}</div>
-                                                                                                                </div>
-                                                                                                                <button onClick={() => selectBrokerGroup(m)} className="select-btn select-btn-green py-2 px-6">Use Group</button>
-                                                                                                            </div>
-                                                                                                        </div>
-                                                                                                    ))}
-                                                                                                </div>
-                                                                                            ) : (
-                                                                                                <>
-                                                                                                    <div className="suggestion-header"><div className="suggestion-col-title bg-blue-900 border-r border-black">Master 1 Suggestions</div><div className="suggestion-col-title bg-amber-900">Master 2 Suggestions</div></div>
+                                                        {displayOrder.map((originalIdx, uiIdx) => {
+                                                            const r = records[originalIdx];
+                                                            return (
+                                                                <tr key={originalIdx} className="border-b border-black compact-row transition-colors">
+                                                                    <td className="p-0 text-center bg-slate-100 font-black text-slate-400 border-r border-black sticky left-0 text-[8px]">{uiIdx + 1}</td>
+                                                                    <td className="p-0 text-center bg-white border-r border-black sticky left-32 shadow-sm" style={{left: '32px'}}><div className="w-full h-full flex items-center justify-center text-blue-500 opacity-20 hover:opacity-100 cursor-help transition-all"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></div></td>
+                                                                    {allColsView.map(c => {
+                                                                        const ed = isEditMode && editableFields.includes(c.key);
+                                                                        return (
+                                                                            <td key={c.key} className={`p-0 border-r border-black relative ${wideCols.includes(c.key) ? 'col-shipper':''}`}>
+                                                                                {ed ? (
+                                                                                    <>
+                                                                                        <input id={`input-${uiIdx}-${c.key}`} type="text" value={r[c.key] || ''} onChange={(e) => handleTyping(originalIdx, c.key, e.target.value)} onKeyDown={(e) => handleKeyDown(e, uiIdx, c.key)} className="w-full h-full font-bold text-blue-900" />
+                                                                                        {search.show && search.row === originalIdx && search.field === c.key && (
+                                                                                            <div className={`suggestion-container custom-scrollbar shadow-2xl ${search.m3List.length ? 'broker-suggestion':''}`} onClick={(e) => e.stopPropagation()}>
+                                                                                                {search.m3List.length ? (
+                                                                                                    <div className="broker-body">
+                                                                                                        <div className="bg-emerald-900 text-white p-2 font-black text-[8px] uppercase border-b border-black">Master 3 Match</div>
+                                                                                                        {search.m3List.map((m, bidx) => (
+                                                                                                            <div key={bidx} className="broker-row"><div className="flex justify-between items-start"><div className="space-y-1 text-[9px] font-black uppercase text-slate-800"><div>1. {m.Vendor1}</div><div>2. {m.Vendor2}</div><div>3. {m.Vendor3}</div></div><button onClick={() => selectBrokerGroup(m)} className="select-btn select-btn-green py-2 px-6">Apply</button></div></div>
+                                                                                                        ))}
+                                                                                                    </div>
+                                                                                                ) : (
                                                                                                     <div className="suggestion-body">
                                                                                                         <div className="master-col">
-                                                                                                            {search.m1List.length > 0 ? search.m1List.map((m, midx) => (
-                                                                                                                <div key={midx} className="suggestion-item"><span className="tag tag-m1">M1</span><div className="flex justify-between items-center gap-2"><div className="font-extrabold text-[10px] text-slate-800 uppercase leading-tight flex-1">{m.name}</div><button onClick={() => selectItem(m, m.sc)} className="select-btn select-btn-blue whitespace-nowrap min-w-[120px] text-center">Use Shipper: {m.sc}</button></div><div className="flex justify-between items-center gap-2 mt-2"><div className="font-black text-[10px] text-slate-700 uppercase leading-tight flex-1 italic">{m.lineDesc}</div><button onClick={() => selectItem(m, m.btp)} className="select-btn select-btn-blue whitespace-nowrap min-w-[120px] text-center">Use BillTo: {m.btp}</button></div><div className="text-[9px] font-bold text-slate-500 mt-2 italic">Ref: {m.cs} | Expires: {m.vt}</div></div>
-                                                                                                            )) : <div className="p-4 text-slate-400 text-center italic text-[10px]">No matches in M1</div>}
+                                                                                                            <div className="bg-blue-900 text-white p-2 font-black text-[8px] uppercase border-b border-black">Master 1 Suggestions</div>
+                                                                                                            {search.m1List.map((m, midx) => (
+                                                                                                                <div key={midx} className="suggestion-item">
+                                                                                                                    <span className="tag tag-m1">M1</span>
+                                                                                                                    <div className="flex justify-between items-center gap-2"><div className="font-extrabold text-[10px] text-slate-800 uppercase flex-1">{m.name}</div><button onClick={() => selectItem(m, m.sc)} className="select-btn select-btn-blue min-w-[120px]">Use Shipper: {m.sc}</button></div>
+                                                                                                                    <div className="flex justify-between items-center gap-2 mt-2"><div className="font-black text-[10px] text-slate-700 italic flex-1">{m.lineDesc}</div><button onClick={() => selectItem(m, m.btp)} className="select-btn select-btn-blue min-w-[120px]">Use BillTo: {m.btp}</button></div>
+                                                                                                                    <div className="text-[9px] font-bold text-slate-500 mt-2 italic">Ref: {m.cs} | Expires: {m.vt}</div>
+                                                                                                                </div>
+                                                                                                            ))}
                                                                                                         </div>
                                                                                                         <div className="master-col">
-                                                                                                            {search.m2List.length > 0 ? search.m2List.map((m, midx) => (
-                                                                                                                <div key={midx} className="suggestion-item"><span className="tag tag-m2">M2</span><div className="font-extrabold text-[10px] text-slate-800 uppercase leading-tight">{m.name}</div><div className="address-box"><span className="address-line">{m.addr}</span><span className="address-line">{m.s2}</span><span className="address-line">{m.s4}</span></div><div className="flex gap-2 mt-3 pt-2 border-t border-slate-100"><button onClick={() => selectItem(m, m.btp)} className="select-btn select-btn-amber w-center text-center">Use Code: {m.btp}</button></div></div>
-                                                                                                            )) : <div className="p-4 text-slate-400 text-center italic text-[10px]">No matches in M2</div>}
+                                                                                                            <div className="bg-amber-900 text-white p-2 font-black text-[8px] uppercase border-b border-black">Master 2 Suggestions</div>
+                                                                                                            {search.m2List.map((m, midx) => (
+                                                                                                                <div key={midx} className="suggestion-item">
+                                                                                                                    <span className="tag tag-m2">M2</span>
+                                                                                                                    <div className="font-extrabold text-[10px] text-slate-800 uppercase">{m.name}</div>
+                                                                                                                    <div className="text-[9px] text-slate-500 italic truncate">{m.addr} | {m.s2}</div>
+                                                                                                                    <div className="flex gap-2 mt-3 pt-2 border-t"><button onClick={() => selectItem({cs: m.btp}, m.btp)} className="select-btn select-btn-amber w-full">Use Code: {m.btp}</button></div>
+                                                                                                                </div>
+                                                                                                            ))}
                                                                                                         </div>
                                                                                                     </div>
-                                                                                                </>
-                                                                                            )}
-                                                                                        </div>
-                                                                                    )}
-                                                                                </>
-                                                                            ) : <div className="px-3 h-full flex items-center truncate font-bold text-slate-500 bg-slate-50/20 whitespace-nowrap min-w-[100px]">{r[c.key] || '-'}</div>}
-                                                                        </td>
-                                                                    );
-                                                                })}
-                                                            </tr>
-                                                        ))}
+                                                                                                )}
+                                                                                            </div>
+                                                                                        )}
+                                                                                    </>
+                                                                                ) : <div className="px-1.5 h-full flex items-center truncate text-slate-500 bg-slate-50/20">{r[c.key] || '-'}</div>}
+                                                                            </td>
+                                                                        );
+                                                                    })}
+                                                                </tr>
+                                                            );
+                                                        })}
                                                     </tbody>
                                                 </table>
                                             </div>
@@ -672,38 +643,39 @@
                         )}
                     </div>
 
-                    {/* Bulk Update Modal */}
-                    {showUpdateModal && (
+                    {/* Security Pass Modal */}
+                    {showPasswordModal.open && (
                         <div className="modal-bg">
-                            <div className="modal-content animate-in fade-in zoom-in duration-150">
-                                <div className="flex justify-between items-center border-b-2 border-emerald-600 pb-2 mb-4"><h3 className="text-[10px] font-black uppercase text-emerald-800 tracking-widest italic">Bulk Update Line A/c & CHA</h3><button onClick={() => setShowUpdateModal(false)} className="text-slate-400 hover:text-black">✕</button></div>
-                                <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-200 text-center">
-                                    <p className="text-[9px] font-bold text-emerald-700 mb-4 uppercase">Match Containers and update values.</p>
-                                    <input type="file" onChange={(e) => onFileUp(e, 'update_line_cha')} accept=".xlsx, .xls" className="text-[10px] font-bold w-full bg-white p-4 rounded-xl border-2 border-dashed border-emerald-300" />
-                                    <div className="mt-4 text-[7px] text-slate-500 uppercase leading-relaxed text-left pl-2">Match: H (Container) | Updates: AF (CHA), AH (Line A/c)</div>
-                                </div>
+                            <div className="modal-content text-center">
+                                <h3 className="text-[10px] font-black uppercase text-red-600 border-b border-black pb-2 mb-4">Authorization Required</h3>
+                                <input type="password" value={passInput} onChange={(e)=>setPassInput(e.target.value)} onKeyDown={(e)=>e.key==='Enter'&&checkSecondaryPassword(passInput, showPasswordModal.target, showPasswordModal.data)} className="w-full bg-slate-100 p-3 rounded-lg border-2 border-black text-center mb-4" autoFocus placeholder="Enter Password" />
+                                <div className="flex gap-2"><button onClick={()=>checkSecondaryPassword(passInput, showPasswordModal.target, showPasswordModal.data)} className="flex-1 bg-slate-900 text-white py-2 rounded-lg font-black text-[10px] uppercase transition-all shadow-md">Verify</button><button onClick={()=>setShowPasswordModal({open:false})} className="flex-1 border border-black py-2 rounded-lg font-black text-[10px] uppercase">Cancel</button></div>
                             </div>
                         </div>
                     )}
-
-                    {/* Save Modal */}
+                    {showUpdateModal && (
+                        <div className="modal-bg">
+                            <div className="modal-content">
+                                <div className="flex justify-between items-center border-b-2 border-emerald-600 pb-2 mb-4"><h3 className="text-[10px] font-black uppercase">Bulk Update Tool</h3><button onClick={() => setShowUpdateModal(false)} className="text-slate-400 hover:text-black">✕</button></div>
+                                <input type="file" onChange={(e)=>onFileUp(e,'update_line_cha')} accept=".xlsx, .xls" className="text-[10px] font-bold w-full bg-white p-4 rounded-xl border-2 border-dashed border-emerald-300" />
+                                <div className="mt-4 text-[7px] text-slate-500 uppercase leading-relaxed font-bold italic tracking-tighter">Match: H (Container) | Updates: AF (CHA), AH (Line A/c)</div>
+                            </div>
+                        </div>
+                    )}
                     {showSaveModal && (
                         <div className="modal-bg">
-                            <div className="modal-content animate-in fade-in zoom-in duration-150">
-                                <div className="flex justify-between items-center border-b border-black pb-2 mb-4"><h3 className="text-[10px] font-black uppercase text-slate-800 tracking-widest italic">Save to SAP Cloud</h3><button onClick={() => setShowSaveModal(false)} className="text-slate-400 hover:text-black" disabled={isSaving}>✕</button></div>
-                                <div className="flex gap-2 items-center"><input type="text" value={jobNameInput} onChange={(e) => setJobNameInput(e.target.value)} placeholder="Enter File Name..." className={`flex-1 bg-slate-100 p-3 rounded-lg border-2 border-black text-[11px] font-black h-10 ${isSaving ? 'opacity-50' : ''}`} autoFocus disabled={isSaving} /><button onClick={saveCurrentJob} className={`bg-blue-600 text-white px-6 h-10 rounded-lg text-[10px] font-black uppercase shadow-xl transition-all ${isSaving ? 'opacity-70' : 'hover:bg-blue-700'}`} disabled={isSaving}>{isSaving ? `${saveProgress}%` : 'Save'}</button></div>
+                            <div className="modal-content">
+                                <h3 className="text-[10px] font-black uppercase mb-4 border-b border-black pb-2 italic">Save to SAP Cloud</h3>
+                                <div className="flex gap-2 mb-4"><input type="text" value={jobNameInput} onChange={(e)=>setJobNameInput(e.target.value)} placeholder="Enter File Name" className="flex-1 bg-slate-100 p-3 rounded-lg border-2 border-black text-[11px] font-black" autoFocus /><button onClick={saveCurrentJob} className="bg-blue-600 text-white px-6 rounded-lg text-[10px] font-black uppercase hover:bg-blue-700 transition-all shadow-lg">Save</button></div>
                                 {isSaving && <div className="progress-bar-container"><div className="progress-bar-fill" style={{ width: `${saveProgress}%` }}></div></div>}
                             </div>
                         </div>
                     )}
-
-                    {/* Home Confirmation Modal */}
                     {showHomeModal && (
                         <div className="modal-bg">
-                            <div className="modal-content animate-in fade-in zoom-in duration-150 text-center">
-                                <h3 className="text-xs font-black uppercase text-slate-800 mb-2 italic">Confirm Action</h3>
-                                <p className="text-[10px] font-bold text-slate-600 mb-6 uppercase">Do you want to save the current file before going Home?</p>
-                                <div className="flex flex-col gap-2"><button onClick={() => { setShowHomeModal(false); setAfterSaveRedirect('home'); setJobNameInput(activeJobName); setShowSaveModal(true); }} className="bg-blue-600 text-white py-3 rounded-lg text-[10px] font-black uppercase shadow-lg hover:bg-blue-700 transition-all">Yes, Save & Home</button><button onClick={resetToHome} className="bg-slate-900 text-white py-3 rounded-lg text-[10px] font-black uppercase shadow-lg hover:bg-slate-800 transition-all">No, Go Home Directly</button><button onClick={() => setShowHomeModal(false)} className="text-slate-400 py-2 text-[9px] font-black uppercase hover:text-slate-600">Cancel</button></div>
+                            <div className="modal-content text-center">
+                                <h3 className="text-xs font-black uppercase text-slate-800 mb-4 italic tracking-widest">Confirm Exit</h3>
+                                <div className="flex flex-col gap-2"><button onClick={()=>{ setShowHomeModal(false); setAfterSaveRedirect('home'); setJobNameInput(activeJobName); setShowSaveModal(true); }} className="bg-blue-600 text-white py-3 rounded-lg text-[10px] font-black uppercase hover:bg-blue-700 transition-all shadow-md">Yes, Save & Home</button><button onClick={resetToHome} className="bg-slate-900 text-white py-3 rounded-lg text-[10px] font-black uppercase hover:bg-slate-800 transition-all shadow-md">No, Go Home Directly</button><button onClick={()=>setShowHomeModal(false)} className="text-[9px] font-black text-slate-400 uppercase">Cancel</button></div>
                             </div>
                         </div>
                     )}
