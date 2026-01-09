@@ -201,6 +201,7 @@
                     <thead>
                         <tr>
                             <th>Customer Name</th>
+                            <th>Associated Sales Person</th>
                             <th>Saved Locations</th>
                             <th>Action</th>
                         </tr>
@@ -218,8 +219,19 @@
                     <input type="hidden" id="editId" value="">
                     
                     <div class="input-group">
+                        <!-- REORDERED: Customer -> Location -> Sales Person -->
                         <div class="input-item">
-                            <label for="salesPerson">Sales Person:</label>
+                            <label for="customerName">Customer Name:</label>
+                            <input type="text" id="customerName" name="customerName" list="customerSuggestions" required autocomplete="off" placeholder="Start typing...">
+                            <datalist id="customerSuggestions"></datalist>
+                        </div>
+                        <div class="input-item">
+                            <label for="location">Location (Filtered by Customer):</label>
+                            <input type="text" id="location" name="location" list="locationSuggestions" autocomplete="off" placeholder="Select or type new...">
+                            <datalist id="locationSuggestions"></datalist>
+                        </div>
+                        <div class="input-item">
+                            <label for="salesPerson">Sales Person (Auto-Set):</label>
                             <select id="salesPerson" name="salesPerson" required>
                                 <option value="" disabled selected>Select Sales Person</option>
                                 <option value="Anurag Pandey">Anurag Pandey</option>
@@ -230,16 +242,6 @@
                                 <option value="Mohik">Mohik</option>
                                 <option value="Rajesh Kumar">Rajesh Kumar</option>
                             </select>
-                        </div>
-                        <div class="input-item">
-                            <label for="customerName">Customer Name:</label>
-                            <input type="text" id="customerName" name="customerName" list="customerSuggestions" required autocomplete="off" placeholder="Start typing...">
-                            <datalist id="customerSuggestions"></datalist>
-                        </div>
-                        <div class="input-item">
-                            <label for="location">Location (Filtered by Customer):</label>
-                            <input type="text" id="location" name="location" list="locationSuggestions" autocomplete="off" placeholder="Select or type new...">
-                            <datalist id="locationSuggestions"></datalist>
                         </div>
                     </div>
                     <div class="input-group">
@@ -364,7 +366,7 @@
 
         // Local cache
         let allRecords = [];
-        let masterData = {}; // Format: { "CUSTOMER_NAME": ["LOC1", "LOC2"] }
+        let masterData = {}; // Format: { "CUSTOMER_NAME": { locations: ["LOC1"], salesPerson: "Name" } }
 
         // ==========================================
         //  APP LOGIC
@@ -407,12 +409,15 @@
                     document.getElementById('loadingOverlay').style.display = 'none';
                 });
 
-                // 2. Listen to Master Data
+                // 2. Listen to Master Data (With Sales Person)
                 MASTER_COLLECTION.onSnapshot((snapshot) => {
                     masterData = {};
                     snapshot.docs.forEach(doc => {
                         const data = doc.data();
-                        masterData[doc.id] = data.locations || [];
+                        masterData[doc.id] = {
+                            locations: data.locations || [],
+                            salesPerson: data.salesPerson || ""
+                        };
                     });
                     updateCustomerDatalist();
                     renderMasterTable();
@@ -448,32 +453,38 @@
             });
         }
 
-        // --- UPDATED LISTENER FOR AUTO-FILL ---
+        // --- UPDATED LISTENER FOR AUTO-FILL (Sales Person & Locations) ---
         document.getElementById('customerName').addEventListener('input', function() {
             const custName = this.value.trim().toUpperCase();
             const locInput = document.getElementById('location');
             const locDatalist = document.getElementById('locationSuggestions');
+            const salesPersonSelect = document.getElementById('salesPerson');
             
             // Clear current location options
             locDatalist.innerHTML = '';
             
             if (masterData[custName]) {
-                const locations = masterData[custName];
+                const data = masterData[custName];
+                const locations = data.locations;
                 
-                // Populate options
+                // 1. Auto-Select Sales Person
+                if (data.salesPerson) {
+                    salesPersonSelect.value = data.salesPerson;
+                }
+
+                // 2. Populate Locations
                 locations.forEach(loc => {
                     const op = document.createElement('option');
                     op.value = loc;
                     locDatalist.appendChild(op);
                 });
 
-                // AUTO-FILL LOGIC: If exactly 1 location, auto-select it
+                // 3. Auto-Fill Location Logic
                 if (locations.length === 1) {
                     locInput.value = locations[0];
                 } 
-                // If multiple locations, clear the field so user must choose
-                // (Only clear if the current value is not in the valid list)
                 else if (locations.length > 1) {
+                    // Only clear if current value isn't valid for this customer
                     if (!locations.includes(locInput.value.toUpperCase())) {
                         locInput.value = ""; 
                     }
@@ -481,26 +492,39 @@
             }
         });
 
-        async function updateMasterData(customer, location) {
+        // UPDATED: Now saves Sales Person too
+        async function updateMasterData(customer, location, salesPerson) {
             if (!customer) return;
             const custKey = customer.toUpperCase().trim();
             const locKey = location ? location.toUpperCase().trim() : "";
             
-            // Check if customer exists in master
             const docRef = MASTER_COLLECTION.doc(custKey);
             const docSnap = await docRef.get();
 
+            let updatePayload = {};
+            let isNew = false;
+
             if (!docSnap.exists) {
-                // Create new master record
-                await docRef.set({
+                isNew = true;
+                updatePayload = {
                     customerName: custKey,
-                    locations: locKey ? [locKey] : []
-                });
-            } else if (locKey) {
-                // Add location if not exists (Array Union)
-                await docRef.update({
-                    locations: firebase.firestore.FieldValue.arrayUnion(locKey)
-                });
+                    locations: locKey ? [locKey] : [],
+                    salesPerson: salesPerson || ""
+                };
+            } else {
+                if (locKey) {
+                    updatePayload.locations = firebase.firestore.FieldValue.arrayUnion(locKey);
+                }
+                // Always update sales person if provided (latest entry overwrites)
+                if (salesPerson) {
+                    updatePayload.salesPerson = salesPerson;
+                }
+            }
+
+            if (isNew) {
+                await docRef.set(updatePayload);
+            } else if (Object.keys(updatePayload).length > 0) {
+                await docRef.update(updatePayload);
             }
         }
 
@@ -509,7 +533,10 @@
             const loc = document.getElementById('newMasterLocation').value;
             if(!cust) return alert("Customer Name is required");
             
-            await updateMasterData(cust, loc);
+            // Note: Manual add currently doesn't ask for Sales Person, 
+            // but it will be learned automatically during daily entry.
+            await updateMasterData(cust, loc, null);
+            
             document.getElementById('newMasterCustomer').value = '';
             document.getElementById('newMasterLocation').value = '';
             alert("Master updated!");
@@ -531,7 +558,6 @@
                     const data = new Uint8Array(e.target.result);
                     const workbook = XLSX.read(data, { type: 'array' });
                     const firstSheet = workbook.SheetNames[0];
-                    // Read array of arrays: [[Cust, Loc], [Cust, Loc]]
                     const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet], { header: 1 });
 
                     let count = 0;
@@ -546,18 +572,19 @@
                         const custRaw = row[0] ? String(row[0]).trim() : "";
                         const locRaw = row[1] ? String(row[1]).trim() : "";
                         
-                        // Skip header if it exists
+                        // Skip header
                         if(i === 0 && custRaw.toUpperCase().includes("CUSTOMER")) continue;
                         if(!custRaw) continue;
 
-                        await updateMasterData(custRaw, locRaw);
+                        // Bulk upload doesn't have sales person column yet, so passing null
+                        await updateMasterData(custRaw, locRaw, null);
                         count++;
                     }
 
                     document.getElementById('loadingOverlay').style.display = 'none';
                     document.getElementById('loadingOverlay').innerText = "Connecting to Database...";
                     alert(`Successfully uploaded ${count} customer records.`);
-                    fileInput.value = ""; // clear input
+                    fileInput.value = ""; 
                     
                 } catch (error) {
                     console.error(error);
@@ -580,10 +607,13 @@
             
             Object.keys(masterData).sort().forEach(cust => {
                 const tr = document.createElement('tr');
-                const locs = masterData[cust].map(l => `<span class="tag">${l}</span>`).join(" ");
+                const data = masterData[cust];
+                const locs = data.locations.map(l => `<span class="tag">${l}</span>`).join(" ");
+                const sp = data.salesPerson ? `<span style="color:blue; font-weight:bold;">${data.salesPerson}</span>` : '<span style="color:#ccc;">-</span>';
                 
                 tr.innerHTML = `
                     <td style="font-weight:bold;">${cust}</td>
+                    <td>${sp}</td>
                     <td>${locs || '<span style="color:#999;font-size:0.7em;">No Loc</span>'}</td>
                     <td><button onclick="deleteMaster('${cust}')" style="background:#dc3545; color:white; border:none; border-radius:3px; cursor:pointer;">Del</button></td>
                 `;
@@ -704,9 +734,10 @@
 
             const custName = form.customerName.value.trim().toUpperCase();
             const locName = form.location.value.trim().toUpperCase();
+            const spName = form.salesPerson.value;
 
             const formData = {
-                salesPerson: form.salesPerson.value,
+                salesPerson: spName,
                 customerName: custName,
                 location: locName,
                 container20: form.container20.value.trim(),
@@ -749,8 +780,8 @@
                     await SALES_COLLECTION.add(formData);
                 }
                 
-                // AUTO-LEARN MASTER DATA
-                await updateMasterData(custName, locName);
+                // AUTO-LEARN MASTER DATA (Includes Sales Person)
+                await updateMasterData(custName, locName, spName);
 
                 resetForm();
             } catch (e) {
