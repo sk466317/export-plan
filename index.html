@@ -3,149 +3,246 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SAP Billing Manager Pro - Secure Cloud</title>
+    <title>Daily Export Planning & Report (Firebase)</title>
     
-    <!-- External Frameworks -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    
-    <!-- SheetJS with Style support -->
-    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
-    
-    <!-- Firebase Compat -->
+    <!-- FIREBASE LIBRARIES -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+        /* General Styles */
+        body { font-family: Arial, sans-serif; margin: 0; padding: 8px; background-color: #ffffff; color: #333; }
         
-        /* 95% Zoom aur Universal Bold Text */
-        body { 
-            font-family: 'Inter', sans-serif; 
-            font-size: 10px; 
-            background-color: #f8fafc; 
-            color: #0f172a; 
-            margin: 0; 
-            zoom: 95%; 
-            font-weight: 700 !important; 
+        /* Main Container */
+        .main-container { max-width: 1050px; margin: auto; padding: 12px; border-radius: 8px; background-color: #ffffff; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); }
+        
+        /* Entry Form Section */
+        .entry-container { padding: 12px; border: 1px solid #cceeff; border-radius: 8px; background-color: #999999; margin-bottom: 15px; }
+        .entry-container h2 { text-align: center; margin-bottom: 12px; font-size: 1.3rem; background-color: #007bff; color: white; padding: 8px; border-radius: 5px; font-weight: bold; }
+        
+        /* Input Layout */
+        .input-group { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 6px; }
+        .input-item { flex: 1 1 calc(33.333% - 8px); min-width: 200px; box-sizing: border-box; }
+        
+        label { display: block; margin-bottom: 3px; font-weight: bold; color: #333333; font-size: 0.85rem; }
+        
+        input[type="text"], input[type="date"], input[type="number"], textarea, select {
+            width: 100%; padding: 6px; border: 1px solid #007bff; border-radius: 4px; font-size: 0.9rem; background-color: #ffffff; box-sizing: border-box; color: #333; font-weight: bold;
+        }
+        #customerName, #location { text-transform: uppercase; }
+        textarea { resize: vertical; min-height: 45px; }
+        
+        /* Buttons */
+        .button-group { display: flex; gap: 6px; margin-top: 12px; flex-wrap: wrap; justify-content: center; }
+        .button-group button {
+            flex: 1 1 auto; padding: 8px; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 0.9rem; transition: background-color 0.3s; min-width: 130px; max-width: 200px; font-weight: bold;
+        }
+        #saveEntryBtn { background-color: #28a745; }
+        #saveEntryBtn:hover { background-color: #218838; }
+        #saveEntryBtn.editing { background-color: #ff9800; }
+        #saveEntryBtn.editing:hover { background-color: #e68a00; }
+        #downloadCsvBtn { background-color: #17a2b8; }
+        #shareReportBtn { background-color: #25D366; }
+        #clearAllBtn { background-color: #dc3545; }
+        #clearAllBtn:hover { background-color: #c82333; }
+        
+        /* Report Section */
+        .report-container { margin-top: 20px; padding: 12px; border: 4px solid #007BFF; border-radius: 8px; background-color: #51f1ff; }
+        .report-container h2 { color: #333; margin-bottom: 10px; text-align: center; font-weight: bold; font-size: 1.2rem; }
+        
+        /* Search Box */
+        .search-box { width: 100%; padding: 8px; margin-bottom: 10px; border: 2px solid #007bff; border-radius: 4px; font-size: 0.9rem; font-weight: bold; background-color: #fff; box-sizing: border-box; }
+
+        #reportTableContainer { overflow-x: auto; margin-top: 8px; background-color: white; border-radius: 5px; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05); }
+        #reportTable { width: 100%; border-collapse: collapse; font-size: 0.75rem; table-layout: auto; }
+        #reportTable th, #reportTable td { border: 1px solid #ddd; padding: 4px 6px; text-align: left; white-space: normal; word-wrap: break-word; font-weight: bold; vertical-align: middle; }
+        #reportTable th { background-color: #333333; color: white; position: sticky; top: 0; z-index: 10; font-size: 0.72rem; }
+        
+        /* Column Widths */
+        #reportTable th:nth-child(1), #reportTable td:nth-child(1) { min-width: 35px; text-align: center; } /* Sr No */
+        #reportTable th:nth-child(2), #reportTable td:nth-child(2) { min-width: 95px; } /* Sales Person */
+        #reportTable th:nth-child(3), #reportTable td:nth-child(3) { min-width: 150px; } /* Customer Name */
+        #reportTable th:nth-child(4), #reportTable td:nth-child(4) { min-width: 75px; } /* Location */
+        #reportTable th:nth-child(5), #reportTable td:nth-child(5) { min-width: 45px; text-align: center; } /* 20 */
+        #reportTable th:nth-child(6), #reportTable td:nth-child(6) { min-width: 45px; text-align: center; } /* 40 */
+        #reportTable th:nth-child(7), #reportTable td:nth-child(7) { min-width: 75px; text-align: center; } /* Dbl */
+        #reportTable th:nth-child(8), #reportTable td:nth-child(8) { min-width: 75px; text-align: center; } /* Date */
+        #reportTable th:nth-child(9), #reportTable td:nth-child(9) { min-width: 55px; text-align: center; } /* Priority */
+        #reportTable th:nth-child(10), #reportTable td:nth-child(10) { min-width: 100px; } /* Remarks */
+        #reportTable th:nth-child(11), #reportTable td:nth-child(11) { min-width: 75px; text-align: center; } /* Actions */
+        
+        #reportTable tbody tr:nth-child(even) { background-color: #f8f8f8; }
+        #reportTable .high-priority { background-color: #b5ff0d !important; }
+        #reportTable tfoot td { font-weight: bold; background-color: #e0e0e0; border-top: 2px solid #333; color: #000; }
+        
+        /* Action buttons */
+        .action-cell { display: flex; flex-direction: column; gap: 2px; align-items: center; }
+        .action-cell button { padding: 2px 5px; margin: 0; font-size: 0.7rem; border-radius: 3px; cursor: pointer; transition: background-color 0.2s; width: 60px; font-weight: bold; }
+        .edit-btn { background-color: #007bff; color: white; }
+        .edit-btn:hover { background-color: #0056b3; }
+        .delete-btn { background-color: #dc3545; color: white; }
+        .delete-btn:hover { background-color: #c82333; }
+        
+        @media (max-width: 768px) {
+            .input-item { flex: 1 1 100%; min-width: unset; }
+            .button-group button { flex: 1 1 100%; }
+            #reportTable { font-size: 0.7rem; }
+            #reportTable th, #reportTable td { padding: 3px; }
         }
         
-        .custom-scrollbar::-webkit-scrollbar { width: 10px; height: 12px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; border: 2px solid #f1f1f1; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .highlight-error { border: 2px solid red !important; background-color: #ffe5e5 !important; box-shadow: 0 0 5px rgba(255, 0, 0, 0.5) !important; }
+        
+        /* Hidden table for capture */
+        #hiddenReportTableWrapper { position: absolute; left: -9999px; top: 0; width: auto; padding: 15px; background-color: #6fa8dc; font-family: Arial, sans-serif; color: #333; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); border-radius: 8px; }
+        #hiddenReportTableWrapper h2 { text-align: center; margin-bottom: 12px; color: #333; font-weight: bold; }
+        #hiddenReportTable { width: 100%; border-collapse: collapse; font-size: 0.75rem; background-color: white; table-layout: auto; }
+        #hiddenReportTable th, #hiddenReportTable td { border: 1px solid #0c343d; padding: 4px 6px; text-align: left; white-space: normal; word-wrap: break-word; font-weight: bold; vertical-align: middle; }
+        #hiddenReportTable th { background-color: #333333; color: white; font-size: 0.72rem; }
+        #hiddenReportTable .high-priority { background-color: #b5ff0d !important; }
+        #hiddenReportTable tfoot td { font-weight: bold; background-color: #d5a6bd; border-top: 2px solid #333; }
+        #hiddenReportTable .action-col { display: none !important; }
 
-        .compact-row { height: 28px; }
-        input { 
-            font-size: 10px !important; 
-            outline: none !important; 
-            border: none !important; 
-            width: 100%; 
-            height: 100%; 
-            padding: 0 10px; 
-            font-weight: 700 !important; 
-            background: transparent;
-            display: block;
+        /* Loading Overlay */
+        #loadingOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.8); z-index: 9999;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 1.5rem; font-weight: bold; color: #007bff;
         }
-        
-        table { border-collapse: collapse; width: auto; table-layout: auto; }
-        th { 
-            background: #0f172a; 
-            color: #f8fafc; 
-            text-transform: uppercase; 
-            font-size: 10px; 
-            font-weight: 800; 
-            border: 1px solid #000; 
-            position: sticky; 
-            top: 0; 
-            z-index: 50; 
-            padding: 6px 12px;
-            white-space: nowrap;
-        }
-        td { border: 1px solid #000; padding: 0; font-size: 10px; white-space: nowrap; font-weight: 700; height: 28px; vertical-align: middle; }
-
-        tbody tr:nth-child(even) { background-color: #f1f5f9; }
-        tbody tr:nth-child(odd) { background-color: #ffffff; }
-
-        tbody tr:hover { background-color: #bbf7d0 !important; transition: background 0.1s; }
-        tbody tr:focus-within { background-color: #86efac !important; outline: none; }
-
-        .sticky-left-1 { position: sticky; left: 0; z-index: 45 !important; background: #0f172a !important; border-right: 1px solid #000; }
-        .sticky-left-2 { position: sticky; left: 32px; z-index: 45 !important; background: #1e293b !important; border-right: 1px solid #000; }
-        
-        td:focus-within { outline: 2.5px solid #166534; z-index: 10; }
-
-        .col-shipper, .col-wide { min-width: 240px; }
-        .col-billto { min-width: 140px; }
-        .col-uniquekey { min-width: 150px; }
-
-        .suggestion-container { position: absolute; top: 100%; left: 0; width: 850px; background: white; border: 2px solid #000; border-radius: 12px; box-shadow: 0 25px 60px rgba(0,0,0,0.4); z-index: 9999; max-height: 400px; overflow: hidden; display: flex; flex-direction: column; }
-        .suggestion-header { background: #1e293b; color: white; display: grid; grid-template-columns: 1fr 1fr; border-bottom: 2px solid #000; }
-        .suggestion-col-title { padding: 6px 12px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
-        .suggestion-body { display: grid; grid-template-columns: 1fr 1fr; overflow-y: auto; flex-grow: 1; }
-        .master-col { border-right: 1px solid #cbd5e1; padding: 6px; background: #f8fafc; }
-        .master-col:last-child { border-right: none; background: #fffbeb; }
-
-        .broker-suggestion { width: 450px !important; display: block !important; }
-        .broker-body { padding: 8px; display: block !important; max-height: 380px; overflow-y: auto; }
-        .broker-row { padding: 8px; border: 1px solid #e2e8f0; border-radius: 8px; background: white; margin-bottom: 6px; transition: all 0.2s; }
-        .broker-row:hover { border-color: #10b981; background: #f0fdf4; }
-
-        .suggestion-item { padding: 10px; border-radius: 6px; transition: all 0.2s; display: flex; flex-direction: column; gap: 4px; background: white; margin-bottom: 6px; border: 1px solid #e2e8f0; }
-        .suggestion-item:hover { border-color: #2563eb; background-color: #f0f9ff; transform: scale(0.99); }
-        
-        .tag { font-size: 8px; padding: 1px 5px; border-radius: 4px; font-weight: 900; text-transform: uppercase; margin-bottom: 2px; width: fit-content; }
-        .tag-m1 { background-color: #2563eb; color: white; }
-        .tag-m2 { background-color: #d97706; color: white; }
-        .tag-m3 { background-color: #10b981; color: white; }
-        
-        .select-btn { font-size: 9px; font-weight: 800; padding: 4px 8px; border-radius: 6px; text-transform: uppercase; border: 1px solid transparent; cursor: pointer; display: inline-block; }
-        .select-btn-blue { background: #dbeafe; color: #1e40af; border-color: #bfdbfe; }
-        .select-btn-blue:hover { background: #2563eb; color: white; }
-        .select-btn-amber { background: #fef3c7; color: #92400e; border-color: #fde68a; }
-        .select-btn-amber:hover { background: #d97706; color: white; }
-        .select-btn-green { background: #d1fae5; color: #065f46; border-color: #6ee7b7; }
-        .select-btn-green:hover { background: #10b981; color: white; }
-
-        .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 20px; }
-        .modal-content { background: white; width: 100%; max-width: 420px; border-radius: 12px; padding: 20px; border: 3px solid #000; box-shadow: 0 40px 80px rgba(0,0,0,0.6); }
-        
-        .progress-bar-container { height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden; margin-top: 12px; width: 100%; border: 1px solid #000; }
-        .progress-bar-fill { height: 100%; background: #2563eb; transition: width 0.3s ease; }
-
-        @keyframes marquee {
-            0% { transform: translateX(100%); }
-            100% { transform: translateX(-100%); }
-        }
-        .scrolling-text {
-            display: inline-block;
-            white-space: nowrap;
-            animation: marquee 12s linear infinite;
-        }
-
-        /* Login & Loading UI */
-        .login-bg { background: radial-gradient(circle, #1e293b 0%, #0f172a 100%); height: 100vh; display: flex; align-items: center; justify-content: center; }
-        .login-card { background: white; border-radius: 20px; border: 4px solid #3b82f6; padding: 40px; width: 320px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); text-align: center; }
-
-        .loading-overlay { background: #f8fafc; height: 100vh; display: flex; align-items: center; justify-content: center; flex-direction: column; }
-        .loading-box { background: white; padding: 30px; border-radius: 15px; border: 2px solid #3b82f6; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; max-width: 300px; }
-        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #3b82f6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 15px; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        .latest-job-highlight { background-color: #fff9db !important; border: 2px solid #eab308 !important; }
-        .new-file-badge { background-color: #ef4444; color: white; padding: 2px 6px; border-radius: 4px; font-size: 7px; font-weight: 900; animation: pulse 2s infinite; margin-left: 10px; }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
-    <div id="root"></div>
+    <div id="loadingOverlay">Connecting to Database...</div>
 
-    <script type="text/babel">
-        const { useState, useRef, useMemo, useEffect } = React;
+    <div class="main-container">
+        <div class="entry-container">
+            <h2 id="entryHeader">Daily Export Planning</h2>
+            <form id="salesEntryForm">
+                <!-- ID for Editing (Firestore Document ID) -->
+                <input type="hidden" id="editId" value="">
+                
+                <div class="input-group">
+                    <div class="input-item">
+                        <label for="salesPerson">Sales Person:</label>
+                        <select id="salesPerson" name="salesPerson" required>
+                            <option value="" disabled selected>Select Sales Person</option>
+                            <option value="Anurag Pandey">Anurag Pandey</option>
+                            <option value="Chirag Rana">Chirag Rana</option>
+                            <option value="Damanjeet Singh">Damanjeet Singh</option>
+                            <option value="Harsimran">Harsimran</option>
+                            <option value="Kunal Sahi">Kunal Sahi</option>
+                            <option value="Mohik">Mohik</option>
+                            <option value="Rajesh Kumar">Rajesh Kumar</option>
+                        </select>
+                    </div>
+                    <div class="input-item">
+                        <label for="customerName">Customer Name:</label>
+                        <input type="text" id="customerName" name="customerName" list="customerSuggestions" required autocomplete="off">
+                        <datalist id="customerSuggestions"></datalist>
+                    </div>
+                    <div class="input-item">
+                        <label for="location">Location (Optional):</label>
+                        <input type="text" id="location" name="location" list="locationSuggestions" autocomplete="off">
+                        <datalist id="locationSuggestions"></datalist>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <div class="input-item">
+                        <label for="container20">20" Containers:</label>
+                        <input type="number" id="container20" name="container20" min="0" placeholder="e.g., 2">
+                    </div>
+                    <div class="input-item">
+                        <label for="container40">40" Containers:</label>
+                        <input type="number" id="container40" name="container40" min="0" placeholder="e.g., 1">
+                    </div>
+                    <div class="input-item">
+                        <label for="containerDbl20">Double 20" Containers:</label>
+                        <input type="number" id="containerDbl20" name="containerDbl20" min="0" placeholder="e.g., 0">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <div class="input-item">
+                        <label for="stuffingDate">Stuffing Date:</label>
+                        <input type="date" id="stuffingDate" name="stuffingDate" required>
+                    </div>
+                    <div class="input-item">
+                        <label for="priority">Priority:</label>
+                        <select id="priority" name="priority" required>
+                            <option value="Normal" selected>Normal</option>
+                            <option value="High">High</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="input-item" style="flex: 1 1 100%; min-width: 100%;">
+                    <label for="remarks">Remarks (Optional):</label>
+                    <textarea id="remarks" name="remarks"></textarea>
+                </div>
+                <div class="button-group">
+                    <button type="submit" id="saveEntryBtn">Save Entry & Update Report</button>
+                    <button type="button" id="downloadCsvBtn" onclick="downloadSalesData()">Download Report (CSV)</button>
+                    <button type="button" id="shareReportBtn" onclick="shareReportOnWhatsApp()">Share Report (Photo)</button>
+                    <button type="button" id="clearAllBtn" onclick="clearAllData()">Delete All Data</button>
+                </div>
+            </form>
+        </div>
+        
+        <div class="report-container">
+            <h2 id="reportHeader">HTPL Daily EXIM Movement Planning </h2>
+            <input type="text" id="tableSearch" class="search-box" placeholder="Search Filter: Type Name, Location or Sales Person..." onkeyup="filterTable()">
+            
+            <div id="reportTableContainer">
+                <table id="reportTable">
+                    <thead>
+                        <tr>
+                            <th>Sr No.</th>
+                            <th>Sales Person</th>
+                            <th>Customer Name</th>
+                            <th>Location</th>
+                            <th>20"</th>
+                            <th>40"</th>
+                            <th>Double 20"</th>
+                            <th>Stuffing Date</th>
+                            <th>Priority</th>
+                            <th>Remarks</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                    <tfoot></tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
 
-        // Firebase Configuration
+    <div id="hiddenReportTableWrapper">
+        <h2 id="hiddenReportHeader">HTPL Daily EXIM Movement Planning </h2>
+        <table id="hiddenReportTable">
+            <thead>
+                <tr>
+                    <th>Sr No.</th>
+                    <th>Sales Person</th>
+                    <th>Customer Name</th>
+                    <th>Location</th>
+                    <th>20"</th>
+                    <th>40"</th>
+                    <th>Double 20"</th>
+                    <th>Stuffing Date</th>
+                    <th>Priority</th>
+                    <th>Remarks</th>
+                    <th class="action-col">Actions</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+            <tfoot></tfoot>
+        </table>
+    </div>
+
+    <script>
+        // ==========================================
+        //  FIREBASE CONFIGURATION
+        // ==========================================
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
             apiKey: "AIzaSyDVBKC6l1iQ4DB83ppyBoyBvcgCU5gfi68",
             authDomain: "mybillingapp-38c65.firebaseapp.com",
@@ -160,531 +257,420 @@
         const db = firebase.firestore();
         const auth = firebase.auth();
 
-        const formatDateTime = () => {
-            const d = new Date();
-            const dateStr = `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getFullYear()).slice(-2)}`;
-            const timeStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}:${String(d.getSeconds()).padStart(2, '0')}`;
-            return `${dateStr} ${timeStr}`;
-        };
+        // Path to store shared public data
+        const COLLECTION_PATH = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('sales_records');
 
-        const App = () => {
-            const [isLoggedIn, setIsLoggedIn] = useState(false);
-            const [passInput, setPassInput] = useState("");
-            const [user, setUser] = useState(null);
-            const [view, setView] = useState('billing'); 
-            const [records, setRecords] = useState([]);
-            const [headers, setHeaders] = useState([]);
-            const [master1, setMaster1] = useState([]); 
-            const [master2, setMaster2] = useState([]); 
-            const [master3, setMaster3] = useState([]); 
-            const [savedJobs, setSavedJobs] = useState([]); 
-            const [isUploaded, setIsUploaded] = useState(false);
-            const [isEditMode, setIsEditMode] = useState(false); 
-            const [mastersUnlocked, setMastersUnlocked] = useState(false);
-            const [mastersLoading, setMastersLoading] = useState(false); 
-            const [syncing, setSyncing] = useState(false);
-            const [search, setSearch] = useState({ show: false, m1List: [], m2List: [], m3List: [], row: null, field: null });
+        // Local cache of records
+        let allRecords = [];
+
+        // ==========================================
+        //  APP LOGIC
+        // ==========================================
+
+        function formatDate(dateString) {
+            if (!dateString) return '';
+            const [yyyy, mm, dd] = dateString.split('-');
+            return `${dd}-${mm}-${yyyy}`;
+        }
+        
+        function getTodayDateFormatted() {
+            return new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+        }
+        
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', async () => {
+            const todayISO = new Date().toISOString().split('T')[0];
+            const todayFormatted = getTodayDateFormatted();
             
-            const [showSaveModal, setShowSaveModal] = useState(false);
-            const [showHomeModal, setShowHomeModal] = useState(false);
-            const [showUpdateModal, setShowUpdateModal] = useState(false);
-            const [showPasswordModal, setShowPasswordModal] = useState({ open: false, target: null, data: null });
+            document.getElementById('entryHeader').textContent = `Daily Export Planning (${todayFormatted})`;
+            document.getElementById('reportHeader').textContent = `Daily Export Planning :: (${todayFormatted})`;
+            document.getElementById('stuffingDate').value = todayISO;
             
-            const [jobNameInput, setJobNameInput] = useState("");
-            const [activeJobName, setActiveJobName] = useState("");
-            const [isSaving, setIsSaving] = useState(false);
-            const [saveProgress, setSaveProgress] = useState(0);
-            const [afterSaveRedirect, setAfterSaveRedirect] = useState(null);
+            sortSalesPersonOptions();
 
-            const SERIAL_HEADERS = ["Serial No.", "SMTP/Forwarding No.", "SMTP/Forwarding Date", "SMTP Received Date", "Vessel Name", "Voyage Number", "Discharge Date", "BL Number", "Terminal", "Container Number", "Cabotage Flag(C)", "Container Type", "F/E", "Cargo Commodity", "Description", "Customer Commodity", "Packages", "Shippin Line Code", "Description 1", "Bill to Party Code", "Shipper Code", "Description 2", "Consignee Code", "Description 3", "Tare wt", "Cargo Weight", "Booking Location", "Origin Location", "Destination Location", "Handover Location", "Lineseal", "Customs Seal", "EXIM (Import/Export)", "Minimum Termperature", "Maximum temperature", "HAZ/NON Haz", "UNNO", "Class", "IMCO", "Container Owner", "Place of Supply", "Invoice Type", "WO Number", "Tarrif Type", "Export Gate In Date", "LEO Issued date", "LEO Received Date", "SB Number", "SB Date", "Export Invoice Numbe", "Export Invoice Date", "Broker 1 Code", "Broker 1 Name", "Broker 2 Code", "Broker 2 Name", "Broker 3 Code", "Broker 3 Name", "Empty Pickup Locatio", "Loaded Pickup Locati", "EDI Code", "Remark", "HSN CODE", "Trip Type", "Unique Key", "CS Tariff(Y/N)", "GR Vendor Code", "ICD Billing", "Line A/c", "CHA"];
-
-            // Auth & Init
-            useEffect(() => {
-                const initAuth = async () => {
-                    try {
-                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                            await auth.signInWithCustomToken(__initial_auth_token);
-                        } else {
-                            await auth.signInAnonymously();
-                        }
-                    } catch (err) { setTimeout(initAuth, 2000); }
-                };
-                initAuth();
-                const unsubscribe = auth.onAuthStateChanged(u => setUser(u));
-                return () => unsubscribe();
-            }, []);
-
-            useEffect(() => {
-                if (user && isLoggedIn) {
-                    loadMasters();
-                    const unsub = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('billing_jobs')
-                        .onSnapshot(snap => {
-                            const list = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }))
-                                .sort((a, b) => (b.modifiedMs || 0) - (a.modifiedMs || 0));
-                            setSavedJobs(list);
-                        }, err => console.error("Archive sync error:", err));
-                    return () => unsub();
+            // Login Anonymously & Listen for Data
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await auth.signInWithCustomToken(__initial_auth_token);
+                } else {
+                    await auth.signInAnonymously();
                 }
-            }, [user, isLoggedIn]);
 
-            const loadMasters = async () => {
-                if (!user) return;
-                setMastersLoading(true);
-                try {
-                    const m1Snap = await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('master1_chunks').get();
-                    let m1Data = []; m1Snap.forEach(doc => { m1Data = m1Data.concat(doc.data().rows || []); });
-                    setMaster1(m1Data);
+                // Real-time listener
+                COLLECTION_PATH.onSnapshot((snapshot) => {
+                    allRecords = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     
-                    const m2Snap = await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('master2_chunks').get();
-                    let m2Data = []; m2Snap.forEach(doc => { m2Data = m2Data.concat(doc.data().rows || []); });
-                    setMaster2(m2Data);
-
-                    const m3Snap = await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('master3_chunks').get();
-                    let m3Data = []; m3Snap.forEach(doc => { m3Data = m3Data.concat(doc.data().rows || []); });
-                    setMaster3(m3Data);
-                } catch (e) { console.error("Master Load Error:", e); }
-                setMastersLoading(false);
-            };
-
-            const displayOrder = useMemo(() => {
-                if (!records.length) return [];
-                const indices = records.map((_, i) => i);
-                return indices.sort((a, b) => {
-                    const valA = (records[a]['Shipper Code'] || "").toString().trim().toLowerCase();
-                    const valB = (records[b]['Shipper Code'] || "").toString().trim().toLowerCase();
-                    return valA.localeCompare(valB);
-                });
-            }, [records, isUploaded, activeJobName]);
-
-            const handleLogin = () => {
-                if (passInput === "HTPL@123") { setIsLoggedIn(true); setPassInput(""); }
-                else { alert("Wrong Password!"); }
-            };
-
-            const checkSecondaryPassword = (inputPass, target, extraData) => {
-                if (target === 'delete') {
-                    if (inputPass === "4209211") {
-                        executeDelete(extraData);
-                        setShowPasswordModal({ open: false });
-                        setPassInput("");
-                    } else { alert("Wrong Password for Delete!"); }
-                    return;
-                }
-                if (inputPass === "16111980") {
-                    if (target === 'masters') { setMastersUnlocked(true); setView('masters'); }
-                    else if (target === 'edit') setIsEditMode(true);
-                    setShowPasswordModal({ open: false });
-                    setPassInput("");
-                } else { alert("Incorrect Password!"); }
-            };
-
-            const saveMasters = async (type, data) => {
-                if (!user) return;
-                setSyncing(true);
-                try {
-                    const collectionName = type === 'm1' ? 'master1_chunks' : type === 'm2' ? 'master2_chunks' : 'master3_chunks';
-                    const chunkSize = 800;
-                    for (let i = 0; i < data.length; i += chunkSize) {
-                        const chunkId = `chunk_${Math.floor(i / chunkSize)}`;
-                        await db.collection('artifacts').doc(appId).collection('public').doc('data').collection(collectionName).doc(chunkId).set({ rows: data.slice(i, i + chunkSize) });
-                    }
-                    alert(`Master ${type.toUpperCase()} Saved!`);
-                    loadMasters();
-                } catch (e) { alert("Save Error: " + e.message); }
-                setSyncing(false);
-            };
-
-            const saveCurrentJob = async () => {
-                if (!user || !jobNameInput.trim()) return;
-                setIsSaving(true);
-                setSaveProgress(10);
-                try {
-                    const docRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('billing_jobs').doc(jobNameInput.trim());
-                    const existing = await docRef.get();
-                    const now = formatDateTime();
-                    const ms = Date.now();
-                    await docRef.set({ records, lastModified: now, modifiedMs: ms, createdOn: existing.exists ? existing.data().createdOn : now, isUpdate: existing.exists });
-                    setShowSaveModal(false);
-                    setActiveJobName(jobNameInput.trim());
-                    setIsEditMode(false); 
-                    setSaveProgress(100);
-                    setTimeout(() => { if (afterSaveRedirect === 'home') resetToHome(); else setIsUploaded(true); setIsSaving(false); setSaveProgress(0); }, 500);
-                } catch (e) { alert("Save Error: " + e.message); setIsSaving(false); }
-            };
-
-            const resetToHome = () => { setRecords([]); setIsUploaded(false); setActiveJobName(""); setView('billing'); setIsEditMode(false); setShowHomeModal(false); };
-            const loadJob = (job) => { setRecords(job.records || []); setIsUploaded(true); setActiveJobName(job.id); setIsEditMode(false); setView('billing'); };
-            const executeDelete = async (id) => { try { await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('billing_jobs').doc(id).delete(); } catch (e) { alert(e.message); } };
-
-            const allColsView = [
-                { key: 'Container Number', label: 'Container Number' },
-                { key: 'Customer Commodity', label: 'Customer Commodity' },
-                { key: 'Description 1', label: 'Description 1' },
-                { key: 'Bill to Party Code', label: 'Bill to Party Code' },
-                { key: 'Shipper Code', label: 'Shipper Code' },
-                { key: 'Unique Key', label: 'Unique Key' },
-                { key: 'HAZ/NON Haz', label: 'HAZ/NON Haz' },
-                { key: 'Broker 1 Name', label: 'Broker 1 Name' },
-                { key: 'Broker 2 Name', label: 'Broker 2 Name' },
-                { key: 'Broker 3 Name', label: 'Broker 3 Name' },
-                { key: 'ICD Billing', label: 'ICD Billing' },
-                { key: 'Line A/c', label: 'Line A/c' },
-                { key: 'CHA', label: 'CHA' }
-            ];
-
-            const wideCols = ['Shipper Code', 'Broker 1 Name', 'Broker 2 Name', 'Broker 3 Name', 'CHA', 'ICD Billing'];
-            const editableFields = ['Bill to Party Code', 'Shipper Code', 'Broker 1 Name', 'Broker 2 Name', 'Broker 3 Name', 'ICD Billing', 'Line A/c', 'CHA'];
-
-            const downloadGeneric = (data, filename) => {
-                const processed = data.map(row => {
-                    const nr = { ...row };
-                    // Logic for Line A/c: Blank if 0 or empty
-                    if (!nr['Line A/c'] || nr['Line A/c'] === 0 || nr['Line A/c'] === '0') nr['Line A/c'] = "";
-                    // Place of Supply: Removed '03 default logic as requested. 
-                    // No automatic update here anymore.
-                    return nr;
-                });
-                const ws = XLSX.utils.json_to_sheet(processed, { header: SERIAL_HEADERS });
-                
-                // Auto-fit Logic
-                const range = XLSX.utils.decode_range(ws['!ref']);
-                ws['!cols'] = SERIAL_HEADERS.map(h => ({ wch: 22 }));
-                
-                // Styling logic for Excel Download
-                for (let R = range.s.r; R <= range.e.r; ++R) {
-                    for (let C = range.s.c; C <= range.e.c; ++C) {
-                        const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
-                        
-                        // Initialize cell if not exists to apply borders
-                        if (!ws[cellRef]) ws[cellRef] = { v: "" };
-                        if (!ws[cellRef].s) ws[cellRef].s = {};
-                        
-                        // Universal Calibri 11 Bold
-                        ws[cellRef].s.font = { name: "Calibri", sz: 11, bold: true };
-                        
-                        // Full Grid Borders (Fixed BO border issue here)
-                        ws[cellRef].s.border = {
-                            top: { style: "thin", color: { rgb: "000000" } },
-                            bottom: { style: "thin", color: { rgb: "000000" } },
-                            left: { style: "thin", color: { rgb: "000000" } },
-                            right: { style: "thin", color: { rgb: "000000" } }
-                        };
-
-                        // Header Row (R=0) Styling: DARK SKY BLUE
-                        if (R === 0) {
-                            ws[cellRef].s.fill = { fgColor: { rgb: "33A1DE" } }; 
-                            ws[cellRef].s.font.color = { rgb: "FFFFFF" };       
-                        }
-                    }
-                }
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, "BillingData");
-                XLSX.writeFile(wb, `${filename || 'SAP_EXPORT'}.xlsx`);
-            };
-
-            const downloadFinal = () => downloadGeneric(records, activeJobName || `FINAL_EXPORT_${Date.now()}`);
-
-            const handleHomeClick = () => { if (isUploaded) setShowHomeModal(true); else setView('billing'); };
-            const handleMastersClick = () => { if (mastersUnlocked) setView('masters'); else setShowPasswordModal({ open: true, target: 'masters' }); };
-            const handleEditClick = () => setShowPasswordModal({ open: true, target: 'edit' });
-            
-            const handleKeyDown = (e, uiIdx, col) => { 
-                if (e.key === 'Enter') { 
-                    e.preventDefault(); 
-                    setSearch(prev => ({ ...prev, show: false })); 
-                    const next = uiIdx + 1; 
-                    if (next < displayOrder.length) { 
-                        const el = document.getElementById(`input-${next}-${col}`); 
-                        if(el) el.focus(); 
-                    } 
-                } 
-            };
-
-            const handleTyping = (idx, key, val) => {
-                const up = [...records]; up[idx][key] = val; setRecords(up);
-                if (val.length > 1) {
-                    const q = val.toLowerCase();
-                    if (['Bill to Party Code', 'Shipper Code'].includes(key)) {
-                        const m1MatchesRaw = master1.filter(m => 
-                            (m.Description && m.Description.toLowerCase().includes(q)) || 
-                            (m.LineDesc && m.LineDesc.toLowerCase().includes(q)) || 
-                            (m['Bill to Party'] && m['Bill to Party'].toString().toLowerCase().includes(q))
-                        );
-                        const m1UniqueMap = new Map();
-                        m1MatchesRaw.forEach(m => {
-                            const uk = `${m.Description}-${m.LineDesc}-${m['Cost Sheet No']}-${m['Valid To']}`;
-                            if (!m1UniqueMap.has(uk)) {
-                                m1UniqueMap.set(uk, { 
-                                    name: m.Description, lineDesc: m.LineDesc, 
-                                    btp: m['Bill to Party'], sc: m['Shipper Code'], 
-                                    vt: m['Valid To'], cs: m['Cost Sheet No'], type: 'M1' 
-                                });
-                            }
-                        });
-                        const m1Res = Array.from(m1UniqueMap.values()).sort((a, b) => {
-                            if (!a.vt || !b.vt) return 0;
-                            const [d1, m1, y1] = a.vt.split('-').map(Number);
-                            const [d2, m2, y2] = b.vt.split('-').map(Number);
-                            return new Date(y2, m2-1, d2) - new Date(y1, m1-1, d1);
-                        }).slice(0, 15);
-
-                        const m2Res = master2.filter(m => 
-                            (m['customer Name'] && m['customer Name'].toLowerCase().includes(q)) || 
-                            (m['Customer'] && m['Customer'].toString().toLowerCase().includes(q))
-                        ).map(m => ({ 
-                            name: m['customer Name'], btp: m['Customer'], sc: m['Customer'], addr: m.Address, s2: m['Street 2'], s4: m['Street 4'], type: 'M2' 
-                        })).slice(0, 15);
-
-                        setSearch({ show: true, m1List: m1Res, m2List: m2Res, m3List: [], row: idx, field: key });
-                    }
-                    else if (['Broker 1 Name', 'Broker 2 Name', 'Broker 3 Name'].includes(key)) {
-                        const matchedRows = master3.filter(m => 
-                            (m.Vendor1 && m.Vendor1.toLowerCase().includes(q)) || 
-                            (m.Vendor2 && m.Vendor2.toLowerCase().includes(q)) || 
-                            (m.Vendor3 && m.Vendor3.toLowerCase().includes(q))
-                        ).slice(0, 15);
-                        setSearch({ show: true, m1List: [], m2List: [], m3List: matchedRows, row: idx, field: key });
-                    }
-                } else setSearch({ ...search, show: false });
-            };
-
-            const selectItem = (item, selectedCode) => {
-                setRecords(prev => {
-                    const up = [...prev];
-                    up[search.row][search.field] = selectedCode;
-                    if (item.cs) up[search.row]['Unique Key'] = item.cs || '';
-                    return up;
-                });
-                setSearch(prev => ({ ...prev, show: false }));
-            };
-
-            const selectBrokerGroup = (brokerObj) => {
-                setRecords(prev => {
-                    const up = [...prev];
-                    up[search.row]['Broker 1 Name'] = brokerObj.Vendor1 || '';
-                    up[search.row]['Broker 2 Name'] = brokerObj.Vendor2 || '';
-                    up[search.row]['Broker 3 Name'] = brokerObj.Vendor3 || '';
-                    return up;
-                });
-                setSearch(prev => ({ ...prev, show: false }));
-            };
-
-            const onFileUp = (e, type) => {
-                const f = e.target.files[0]; if (!f) return;
-                const r = new FileReader();
-                r.onload = (ev) => {
-                    const workbook = XLSX.read(ev.target.result, { type: 'binary' });
-                    const firstSheet = workbook.SheetNames[0];
-                    const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet], { defval: "" });
+                    // Update UI
+                    renderTable(allRecords);
+                    renderTable(allRecords, 'hiddenReportTable');
+                    deriveSuggestions(); // Populate datalists from DB data
                     
-                    if (type === 'bill') { setRecords(jsonData); setShowSaveModal(true); setIsEditMode(true); }
-                    else if (type === 'update_line_cha') {
-                        const rows = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet], { header: 1 });
-                        let count = 0;
-                        const updated = records.map(rec => {
-                            const match = rows.find(row => (row[7]||'').toString() === (rec['Container Number']||'').toString());
-                            if (match) { count++; return { ...rec, 'Line A/c': match[33]||'', 'CHA': match[31]||'' }; }
-                            return rec;
-                        });
-                        setRecords(updated); setShowUpdateModal(false); alert(`Updated ${count} Rows.`);
-                    }
-                    else if (type === 'm1') setMaster1(jsonData.map(v => ({ "Cost Sheet No": v["Cost Sheet No"], "Bill to Party": v["Bill to Party"], "LineDesc": v["LineDesc"], "Shipper Code": v["Shipper Code"], "Description": v["Description"], "Valid To": v["Valid To"] })));
-                    else if (type === 'm2') setMaster2(jsonData.map(v => ({ "Customer": v["Customer"], "customer Name": v["customer Name"], "Address": v["Address"], "Street 2": v["Street 2"], "City": v["City"] })));
-                    else if (type === 'm3') setMaster3(jsonData.map(v => ({ "Vendor1": v["Commission Vendor 1"], "Vendor2": v["Commission Vendor 2"], "Vendor3": v["Commission Vendor 3"] })));
-                };
-                r.readAsBinaryString(f);
+                    document.getElementById('loadingOverlay').style.display = 'none';
+                }, (error) => {
+                    console.error("Data sync error:", error);
+                    alert("Error syncing data. Please check connection.");
+                    document.getElementById('loadingOverlay').style.display = 'none';
+                });
+
+            } catch (err) {
+                console.error("Auth Error:", err);
+                alert("Failed to connect to database.");
+            }
+        });
+
+        // --- Core Functions ---
+
+        function renderTable(records, targetTableId = 'reportTable') {
+            const tbody = document.querySelector(`#${targetTableId} tbody`);
+            const tfoot = document.querySelector(`#${targetTableId} tfoot`);
+            tbody.innerHTML = '';
+            tfoot.innerHTML = '';
+            
+            // Sort: SalesPerson ASC, then StuffingDate ASC
+            records.sort((a, b) => {
+                if (a.salesPerson !== b.salesPerson) return a.salesPerson.localeCompare(b.salesPerson);
+                return a.stuffingDate.localeCompare(b.stuffingDate);
+            });
+            
+            let total20 = 0, total40 = 0, totalDbl20 = 0;
+            
+            records.forEach((record, index) => {
+                const row = tbody.insertRow();
+                if (record.priority === 'High') row.classList.add('high-priority');
+                
+                const c20 = parseInt(record.container20) || 0;
+                const c40 = parseInt(record.container40) || 0;
+                const cDbl20 = parseInt(record.containerDbl20) || 0;
+                
+                total20 += c20; total40 += c40; totalDbl20 += cDbl20;
+                
+                row.insertCell().textContent = index + 1;
+                row.insertCell().textContent = record.salesPerson;
+                row.insertCell().textContent = record.customerName;
+                row.insertCell().textContent = record.location || '-';
+                row.insertCell().textContent = c20 > 0 ? c20 : '';
+                row.insertCell().textContent = c40 > 0 ? c40 : '';
+                row.insertCell().textContent = cDbl20 > 0 ? cDbl20 : '';
+                row.insertCell().textContent = formatDate(record.stuffingDate);
+                row.insertCell().textContent = record.priority;
+                row.insertCell().textContent = record.remarks || '-';
+                
+                if (targetTableId === 'reportTable') {
+                    const actionCell = row.insertCell();
+                    actionCell.classList.add('action-cell');
+                    
+                    const editBtn = document.createElement('button');
+                    editBtn.textContent = 'Edit';
+                    editBtn.classList.add('edit-btn');
+                    editBtn.onclick = () => editRecord(record.id); // Pass Doc ID
+                    
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.textContent = 'Delete';
+                    deleteBtn.classList.add('delete-btn');
+                    deleteBtn.onclick = () => deleteRecord(record.id); // Pass Doc ID
+                    
+                    actionCell.appendChild(editBtn);
+                    actionCell.appendChild(deleteBtn);
+                } else {
+                    row.insertCell().classList.add('action-col');
+                }
+            });
+            
+            // Calculate TEUs
+            const totalTEUs = total20 + (total40 * 2) + (totalDbl20 * 2);
+
+            if (records.length > 0) {
+                const totalRow = tfoot.insertRow();
+                // Merge first 4 columns for "GRAND TOTAL" label
+                const totalColspan = 4;
+                const labelCell = totalRow.insertCell();
+                labelCell.colSpan = totalColspan;
+                labelCell.textContent = "GRAND TOTAL:";
+                labelCell.style.textAlign = 'right';
+                
+                // Value Cells
+                totalRow.insertCell().textContent = total20;
+                totalRow.insertCell().textContent = total40;
+                totalRow.insertCell().textContent = totalDbl20;
+                
+                // Merge Remaining Columns and show TEU
+                const remainingColspan = (targetTableId === 'reportTable') ? 4 : 3;
+                const teuCell = totalRow.insertCell();
+                teuCell.colSpan = remainingColspan;
+                teuCell.style.textAlign = 'center';
+                teuCell.style.backgroundColor = '#d1e7dd';
+                teuCell.style.color = '#0f5132';
+                teuCell.textContent = `TOTAL TEUs: ${totalTEUs}`;
+            }
+            
+            // Re-apply filter if search box has text
+            if(targetTableId === 'reportTable') filterTable();
+        }
+
+        function deriveSuggestions() {
+            // Extract unique Customers and Locations from DB records
+            const customers = [...new Set(allRecords.map(r => r.customerName))].sort();
+            const locations = [...new Set(allRecords.map(r => r.location).filter(l => l))].sort();
+
+            const custData = document.getElementById('customerSuggestions');
+            custData.innerHTML = '';
+            customers.forEach(c => {
+                const op = document.createElement('option');
+                op.value = c;
+                custData.appendChild(op);
+            });
+
+            const locData = document.getElementById('locationSuggestions');
+            locData.innerHTML = '';
+            locations.forEach(l => {
+                const op = document.createElement('option');
+                op.value = l;
+                locData.appendChild(op);
+            });
+        }
+
+        // --- CRUD Operations ---
+
+        document.getElementById('salesEntryForm').addEventListener('submit', async function (event) {
+            event.preventDefault();
+            const form = event.target;
+            const editId = document.getElementById('editId').value; // Get ID
+            
+            // Clear errors
+            document.querySelectorAll('#salesEntryForm .highlight-error').forEach(el => el.classList.remove('highlight-error'));
+
+            const formData = {
+                salesPerson: form.salesPerson.value,
+                customerName: form.customerName.value.trim().toUpperCase(),
+                location: form.location.value.trim().toUpperCase(),
+                container20: form.container20.value.trim(),
+                container40: form.container40.value.trim(),
+                containerDbl20: form.containerDbl20.value.trim(),
+                stuffingDate: form.stuffingDate.value,
+                priority: form.priority.value,
+                remarks: form.remarks.value.trim(),
+                timestamp: firebase.firestore.FieldValue.serverTimestamp() // Add server time
             };
+            
+            // Validation
+            let formIsValid = true;
+            const requiredFields = [form.salesPerson, form.customerName, form.stuffingDate];
+            requiredFields.forEach(field => {
+                if (!field.value.trim()) {
+                    field.classList.add('highlight-error');
+                    formIsValid = false;
+                }
+            });
+            
+            const c20 = parseInt(formData.container20) || 0;
+            const c40 = parseInt(formData.container40) || 0;
+            const cDbl20 = parseInt(formData.containerDbl20) || 0;
+            if (c20 + c40 + cDbl20 <= 0) {
+                alert("कृपया कम से कम एक कंटेनर संख्या (20\", 40\", या Double 20\") भरें।");
+                [form.container20, form.container40, form.containerDbl20].forEach(f => {
+                    if (parseInt(f.value) <= 0) f.classList.add('highlight-error');
+                });
+                formIsValid = false;
+            }
+            
+            if (!formIsValid) {
+                alert("कृपया हाईलाइट किए गए सभी आवश्यक फ़ील्ड भरें।");
+                return;
+            }
 
-            if (!isLoggedIn) return (<div className="login-bg"><div className="login-card"><h1 className="text-xl font-black mb-2 uppercase tracking-tighter">HTPL SAP Login</h1><input type="password" value={passInput} onChange={(e)=>setPassInput(e.target.value)} onKeyDown={(e)=>e.key==='Enter'&&handleLogin()} className="w-full bg-slate-100 p-4 rounded-xl border-2 mb-6 text-center" autoFocus placeholder="Password" /><button onClick={handleLogin} className="w-full bg-blue-600 text-white py-4 rounded-xl font-black uppercase tracking-widest">Start System</button></div></div>);
-            if (mastersLoading) return (<div className="loading-overlay"><div className="loading-box"><div className="spinner"></div><h2 className="text-sm font-black uppercase tracking-tighter">PLEASE WAIT</h2><p className="text-[10px] font-bold text-blue-600 uppercase">Masters are Loading.....</p></div></div>);
+            // Save to Firestore
+            try {
+                if (editId) {
+                    await COLLECTION_PATH.doc(editId).update(formData);
+                } else {
+                    await COLLECTION_PATH.add(formData);
+                }
+                resetForm();
+            } catch (e) {
+                console.error("Save error:", e);
+                alert("Error saving data: " + e.message);
+            }
+        });
 
-            return (
-                <div className="h-screen flex flex-col overflow-hidden" onClick={() => setSearch({ ...search, show: false })}>
-                    <nav className="bg-slate-900 text-white p-2 flex justify-between items-center border-b-2 border-blue-600 shadow-xl z-50">
-                        <div className="flex items-center gap-2 font-black uppercase">
-                            <span className="text-blue-400 italic px-2">SAP Billing Pro</span>
-                            <div className="flex bg-slate-800 rounded p-0.5 text-[8px]">
-                                <button onClick={handleHomeClick} className="px-4 py-1.5 rounded hover:bg-slate-700 transition-all">HOME</button>
-                                <button onClick={() => setView('billing')} className={`px-4 py-1.5 rounded transition-all ${view === 'billing' ? 'bg-blue-600':'text-slate-400'}`}>PORTAL</button>
-                                <button onClick={() => { if(!isUploaded) return alert("Upload billing file first!"); setShowUpdateModal(true); }} className="px-4 py-1.5 rounded bg-emerald-600 hover:bg-emerald-500 ml-1 uppercase transition-all">Update "Line A/c / CHA"</button>
-                                <button onClick={handleMastersClick} className={`px-4 py-1.5 rounded transition-all ${view === 'masters' ? 'bg-blue-600':'text-slate-400'}`}>MASTERS</button>
-                                <button onClick={() => setView('saved')} className={`px-4 py-1.5 rounded transition-all ${view === 'saved' ? 'bg-blue-600':'text-slate-400'}`}>SAP FILES</button>
-                                {view === 'billing' && isUploaded && !isEditMode && <button onClick={handleEditClick} className="px-4 py-1.5 rounded bg-red-600 animate-pulse ml-2 shadow-lg">EDIT MODE</button>}
-                            </div>
-                        </div>
-                        <button onClick={() => { setJobNameInput(activeJobName); setShowSaveModal(true); }} className="bg-blue-600 px-4 py-1.5 rounded text-[9px] font-black uppercase hover:bg-blue-500 shadow-lg">SAVE WORK</button>
-                    </nav>
+        function editRecord(docId) {
+            const record = allRecords.find(r => r.id === docId);
+            if (!record) return;
+            
+            document.getElementById('salesPerson').value = record.salesPerson;
+            document.getElementById('customerName').value = record.customerName;
+            document.getElementById('location').value = record.location || '';
+            document.getElementById('container20').value = record.container20;
+            document.getElementById('container40').value = record.container40;
+            document.getElementById('containerDbl20').value = record.containerDbl20;
+            document.getElementById('stuffingDate').value = record.stuffingDate;
+            document.getElementById('priority').value = record.priority;
+            document.getElementById('remarks').value = record.remarks || '';
+            
+            document.getElementById('editId').value = docId; // Set Doc ID
+            document.getElementById('saveEntryBtn').textContent = "Update Entry";
+            document.getElementById('saveEntryBtn').classList.add('editing');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
 
-                    <div className="flex-1 flex flex-col overflow-hidden relative">
-                        {view === 'saved' ? (
-                            <div className="p-8 max-w-4xl mx-auto w-full h-full overflow-y-auto custom-scrollbar">
-                                <div className="bg-white rounded-3xl p-8 border-2 border-black shadow-2xl">
-                                    <h2 className="text-xs font-black uppercase mb-6 text-center italic border-b-2 pb-2">SAP Cloud Archive - List Box</h2>
-                                    <div className="grid gap-4">
-                                        {savedJobs.map((job, idx) => (
-                                            <div key={job.id} className={`p-4 border-2 rounded-xl flex justify-between items-center group transition-all ${idx === 0 ? 'latest-job-highlight border-emerald-500 shadow-lg':'bg-slate-50 border-black'}`}>
-                                                <div className="flex-1">
-                                                    <div className="flex items-center gap-2"><div className="font-black text-xs uppercase">{job.id}</div>{idx === 0 && <span className="new-file-badge">NEW FILE</span>}</div>
-                                                    <div className="text-[8px] font-bold uppercase text-slate-500 mt-1">Saved: {job.createdOn} | Rows: {job.records?.length}</div>
-                                                </div>
-                                                <div className="flex gap-2">
-                                                    <button onClick={() => loadJob(job)} className="bg-slate-900 text-white px-4 py-2 rounded-lg text-[8px] font-black uppercase hover:bg-blue-700 transition-all">Load</button>
-                                                    <button onClick={() => downloadGeneric(job.records, job.id)} className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-[8px] font-black hover:bg-emerald-700 transition-all">Download</button>
-                                                    <button onClick={() => setShowPasswordModal({ open: true, target: 'delete', data: job.id })} className="text-red-600 px-4 py-2 text-[8px] font-black uppercase border border-red-600 rounded-lg hover:bg-red-50 transition-all">Delete</button>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        ) : view === 'masters' ? (
-                            <div className="max-w-xl mx-auto w-full p-8 overflow-y-auto custom-scrollbar h-full">
-                                <div className="bg-white p-8 rounded-[40px] border-2 border-black text-center shadow-2xl">
-                                    <h2 className="text-[10px] font-black uppercase mb-6 border-b pb-2 tracking-widest">Master Configuration</h2>
-                                    <div className="space-y-6">
-                                        <div className="p-4 bg-blue-50/50 rounded-2xl border border-black"><h3 className="font-black text-[9px] uppercase text-blue-700 mb-1 underline">Master 1</h3><input type="file" onChange={(e)=>onFileUp(e,'m1')} className="text-[9px] mb-3 w-full" /><button onClick={()=>saveMasters('m1',master1)} className="w-full bg-blue-600 text-white py-2 rounded-xl text-[9px] font-black uppercase shadow-md hover:bg-blue-700 transition-all">Save M1 to Cloud</button></div>
-                                        <div className="p-4 bg-amber-50/50 rounded-2xl border border-black"><h3 className="font-black text-[9px] uppercase text-blue-700 mb-1 underline">Master 2</h3><input type="file" onChange={(e)=>onFileUp(e,'m2')} className="text-[9px] mb-3 w-full" /><button onClick={()=>saveMasters('m2',master2)} className="w-full bg-amber-600 text-white py-2 rounded-xl text-[9px] font-black uppercase shadow-md hover:bg-amber-700 transition-all">Save M2 to Cloud</button></div>
-                                        <div className="p-4 bg-emerald-50/50 rounded-2xl border border-black"><h3 className="font-black text-[9px] uppercase text-emerald-700 mb-1 underline">Master 3</h3><input type="file" onChange={(e)=>onFileUp(e,'m3')} className="text-[9px] mb-3 w-full" /><button onClick={()=>saveMasters('m3',master3)} className="w-full bg-emerald-600 text-white py-2 rounded-xl text-[9px] font-black uppercase shadow-md hover:bg-emerald-700 transition-all">Save M3 to Cloud</button></div>
-                                    </div>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="flex-1 p-2 flex flex-col overflow-hidden">
-                                {!isUploaded ? (
-                                    <div className="flex-1 flex items-center justify-center">
-                                        <div className="bg-white p-12 rounded-[50px] border-4 border-black text-center shadow-2xl max-sm overflow-hidden relative">
-                                            <h2 className="text-2xl font-black mb-6 uppercase text-slate-800 tracking-tighter italic decoration-blue-600 underline underline-offset-8">SAP Billing Entry</h2>
-                                            <input type="file" onChange={(e)=>onFileUp(e,'bill')} accept=".xlsx, .csv" className="hidden" id="f-up" />
-                                            <label htmlFor="f-up" className="bg-slate-900 text-white px-12 py-4 rounded-3xl font-black cursor-pointer inline-block hover:bg-blue-700 uppercase text-[10px] shadow-2xl transition-all">Select Excel File</label>
-                                            <div className="mt-8 flex justify-center gap-4 text-[8px] font-black text-slate-400 border-t pt-4 uppercase"><span>✓ M1: {master1.length}</span><span className="w-px h-3 bg-slate-200"></span><span>✓ M2: {master2.length}</span><span className="w-px h-3 bg-slate-200"></span><span>✓ M3: {master3.length}</span></div>
-                                            <div className="mt-4 w-full overflow-hidden whitespace-nowrap bg-slate-50 py-1 border-t border-b"><div className="scrolling-text text-[8px] font-black text-blue-600 uppercase tracking-widest italic tracking-tighter">Created By Vikram Singh &nbsp;&nbsp;&nbsp; Created By Vikram Singh</div></div>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <>
-                                        <div className="flex justify-between items-center mb-1 bg-white p-1 rounded-lg border-2 border-black shadow-sm px-4">
-                                            <div className="text-[9px] font-black uppercase text-slate-500 flex items-center gap-3">
-                                                <span className="text-blue-600 uppercase italic">File: {activeJobName || 'Unnamed'}</span>
-                                                <span className="w-px h-3 bg-slate-300"></span>
-                                                <span className={`${isEditMode ? 'text-green-600':'text-red-600'} uppercase font-black italic`}>Status: {isEditMode ? "Editing (Unlocked)" : "Read-Only (Locked)"}</span>
-                                            </div>
-                                            <button onClick={downloadFinal} className="bg-emerald-600 text-white px-6 py-1.5 rounded-lg text-[9px] font-black uppercase italic shadow hover:bg-emerald-700 transition-all font-bold">Download Final .xlsx (A-BQ)</button>
-                                        </div>
-                                        <div className="bg-white border-2 border-black overflow-hidden flex-1 flex flex-col shadow-inner">
-                                            <div className="overflow-auto flex-1 custom-scrollbar">
-                                                <table className="w-full border-collapse">
-                                                    <thead><tr className="compact-row"><th className="sticky left-0 sticky-left-1 text-center font-black">#</th><th className="sticky left-32 sticky-left-2 shadow-sm" style={{left: '32px'}}></th>{allColsView.map(c => <th key={c.key} className={`p-1.5 text-left whitespace-nowrap ${wideCols.includes(c.key) ? 'col-shipper':''}`}>{c.label}</th>)}</tr></thead>
-                                                    <tbody>
-                                                        {displayOrder.map((originalIdx, uiIdx) => {
-                                                            const r = records[originalIdx];
-                                                            return (
-                                                                <tr key={originalIdx} className="border-b border-black compact-row transition-colors">
-                                                                    <td className="p-0 text-center bg-slate-100 font-black text-slate-400 border-r border-black sticky left-0 text-[8px]">{uiIdx + 1}</td>
-                                                                    <td className="p-0 text-center bg-white border-r border-black sticky left-32 shadow-sm" style={{left: '32px'}}><div className="w-full h-full flex items-center justify-center text-blue-500 opacity-20 hover:opacity-100 cursor-help transition-all"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></div></td>
-                                                                    {allColsView.map(c => {
-                                                                        const ed = isEditMode && editableFields.includes(c.key);
-                                                                        return (
-                                                                            <td key={c.key} className={`p-0 border-r border-black relative ${wideCols.includes(c.key) ? 'col-shipper':''}`}>
-                                                                                {ed ? (
-                                                                                    <>
-                                                                                        <input id={`input-${uiIdx}-${c.key}`} type="text" value={r[c.key] || ''} onChange={(e) => handleTyping(originalIdx, c.key, e.target.value)} onKeyDown={(e) => handleKeyDown(e, uiIdx, c.key)} className="w-full h-full font-bold text-blue-900" />
-                                                                                        {search.show && search.row === originalIdx && search.field === c.key && (
-                                                                                            <div className={`suggestion-container custom-scrollbar shadow-2xl ${search.m3List.length ? 'broker-suggestion':''}`} onClick={(e) => e.stopPropagation()}>
-                                                                                                {search.m3List.length ? (
-                                                                                                    <div className="broker-body">
-                                                                                                        <div className="bg-emerald-900 text-white p-2 font-black text-[8px] uppercase border-b border-black">Master 3 Match</div>
-                                                                                                        {search.m3List.map((m, bidx) => (
-                                                                                                            <div key={bidx} className="broker-row"><div className="flex justify-between items-start"><div className="space-y-1 text-[9px] font-black uppercase text-slate-800"><div>1. {m.Vendor1}</div><div>2. {m.Vendor2}</div><div>3. {m.Vendor3}</div></div><button onClick={() => selectBrokerGroup(m)} className="select-btn select-btn-green py-2 px-6">Apply</button></div></div>
-                                                                                                        ))}
-                                                                                                    </div>
-                                                                                                ) : (
-                                                                                                    <div className="suggestion-body">
-                                                                                                        <div className="master-col">
-                                                                                                            <div className="bg-blue-900 text-white p-2 font-black text-[8px] uppercase border-b border-black">Master 1 Suggestions</div>
-                                                                                                            {search.m1List.map((m, midx) => (
-                                                                                                                <div key={midx} className="suggestion-item">
-                                                                                                                    <span className="tag tag-m1">M1</span>
-                                                                                                                    <div className="flex justify-between items-center gap-2"><div className="font-extrabold text-[10px] text-slate-800 uppercase flex-1">{m.name}</div><button onClick={() => selectItem(m, m.sc)} className="select-btn select-btn-blue min-w-[120px]">Use Shipper: {m.sc}</button></div>
-                                                                                                                    <div className="flex justify-between items-center gap-2 mt-2"><div className="font-black text-[10px] text-slate-700 italic flex-1">{m.lineDesc}</div><button onClick={() => selectItem(m, m.btp)} className="select-btn select-btn-blue min-w-[120px]">Use BillTo: {m.btp}</button></div>
-                                                                                                                    <div className="text-[9px] font-bold text-slate-500 mt-2 italic">Ref: {m.cs} | Expires: {m.vt}</div>
-                                                                                                                </div>
-                                                                                                            ))}
-                                                                                                        </div>
-                                                                                                        <div className="master-col">
-                                                                                                            <div className="bg-amber-900 text-white p-2 font-black text-[8px] uppercase border-b border-black">Master 2 Suggestions</div>
-                                                                                                            {search.m2List.map((m, midx) => (
-                                                                                                                <div key={midx} className="suggestion-item">
-                                                                                                                    <span className="tag tag-m2">M2</span>
-                                                                                                                    <div className="font-extrabold text-[10px] text-slate-800 uppercase">{m.name}</div>
-                                                                                                                    <div className="text-[9px] text-slate-500 italic truncate">{m.addr} | {m.s2}</div>
-                                                                                                                    <div className="flex gap-2 mt-3 pt-2 border-t"><button onClick={() => selectItem({cs: m.btp}, m.btp)} className="select-btn select-btn-amber w-full">Use Code: {m.btp}</button></div>
-                                                                                                                </div>
-                                                                                                            ))}
-                                                                                                        </div>
-                                                                                                    </div>
-                                                                                                )}
-                                                                                            </div>
-                                                                                        )}
-                                                                                    </>
-                                                                                ) : <div className="px-1.5 h-full flex items-center truncate text-slate-500 bg-slate-50/20">{r[c.key] || '-'}</div>}
-                                                                            </td>
-                                                                        );
-                                                                    })}
-                                                                </tr>
-                                                            );
-                                                        })}
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        </div>
-                                    </>
-                                )}
-                            </div>
-                        )}
-                    </div>
+        async function deleteRecord(docId) {
+            if (!confirm(`Are you sure you want to delete this entry?`)) return;
+            try {
+                await COLLECTION_PATH.doc(docId).delete();
+                resetForm();
+            } catch (e) {
+                console.error(e);
+                alert("Delete failed.");
+            }
+        }
 
-                    {/* Security Pass Modal */}
-                    {showPasswordModal.open && (
-                        <div className="modal-bg">
-                            <div className="modal-content text-center">
-                                <h3 className="text-[10px] font-black uppercase text-red-600 border-b border-black pb-2 mb-4">Authorization Required</h3>
-                                <input type="password" value={passInput} onChange={(e)=>setPassInput(e.target.value)} onKeyDown={(e)=>e.key==='Enter'&&checkSecondaryPassword(passInput, showPasswordModal.target, showPasswordModal.data)} className="w-full bg-slate-100 p-3 rounded-lg border-2 border-black text-center mb-4" autoFocus placeholder="Enter Password" />
-                                <div className="flex gap-2"><button onClick={()=>checkSecondaryPassword(passInput, showPasswordModal.target, showPasswordModal.data)} className="flex-1 bg-slate-900 text-white py-2 rounded-lg font-black text-[10px] uppercase transition-all shadow-md">Verify</button><button onClick={()=>setShowPasswordModal({open:false})} className="flex-1 border border-black py-2 rounded-lg font-black text-[10px] uppercase">Cancel</button></div>
-                            </div>
-                        </div>
-                    )}
-                    {showUpdateModal && (
-                        <div className="modal-bg">
-                            <div className="modal-content">
-                                <div className="flex justify-between items-center border-b-2 border-emerald-600 pb-2 mb-4"><h3 className="text-[10px] font-black uppercase">Bulk Update Tool</h3><button onClick={() => setShowUpdateModal(false)} className="text-slate-400 hover:text-black">✕</button></div>
-                                <input type="file" onChange={(e)=>onFileUp(e,'update_line_cha')} accept=".xlsx, .xls" className="text-[10px] font-bold w-full bg-white p-4 rounded-xl border-2 border-dashed border-emerald-300" />
-                                <div className="mt-4 text-[7px] text-slate-500 uppercase leading-relaxed font-bold italic tracking-tighter">Match: H (Container) | Updates: AF (CHA), AH (Line A/c)</div>
-                            </div>
-                        </div>
-                    )}
-                    {showSaveModal && (
-                        <div className="modal-bg">
-                            <div className="modal-content">
-                                <h3 className="text-[10px] font-black uppercase mb-4 border-b border-black pb-2 italic">Save to SAP Cloud</h3>
-                                <div className="flex gap-2 mb-4"><input type="text" value={jobNameInput} onChange={(e)=>setJobNameInput(e.target.value)} placeholder="Enter File Name" className="flex-1 bg-slate-100 p-3 rounded-lg border-2 border-black text-[11px] font-black" autoFocus /><button onClick={saveCurrentJob} className="bg-blue-600 text-white px-6 rounded-lg text-[10px] font-black uppercase hover:bg-blue-700 transition-all shadow-lg">Save</button></div>
-                                {isSaving && <div className="progress-bar-container"><div className="progress-bar-fill" style={{ width: `${saveProgress}%` }}></div></div>}
-                            </div>
-                        </div>
-                    )}
-                    {showHomeModal && (
-                        <div className="modal-bg">
-                            <div className="modal-content text-center">
-                                <h3 className="text-xs font-black uppercase text-slate-800 mb-4 italic tracking-widest">Confirm Exit</h3>
-                                <div className="flex flex-col gap-2"><button onClick={()=>{ setShowHomeModal(false); setAfterSaveRedirect('home'); setJobNameInput(activeJobName); setShowSaveModal(true); }} className="bg-blue-600 text-white py-3 rounded-lg text-[10px] font-black uppercase hover:bg-blue-700 transition-all shadow-md">Yes, Save & Home</button><button onClick={resetToHome} className="bg-slate-900 text-white py-3 rounded-lg text-[10px] font-black uppercase hover:bg-slate-800 transition-all shadow-md">No, Go Home Directly</button><button onClick={()=>setShowHomeModal(false)} className="text-[9px] font-black text-slate-400 uppercase">Cancel</button></div>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            );
-        };
+        async function clearAllData() {
+            if (!confirm("Are you sure you want to delete ALL entries? This cannot be undone.")) return;
+            
+            // Note: Client-side batch delete for small datasets. 
+            // For large datasets, this should be a cloud function, but works here.
+            try {
+                const snapshot = await COLLECTION_PATH.get();
+                const batch = db.batch();
+                snapshot.docs.forEach((doc) => {
+                    batch.delete(doc.ref);
+                });
+                await batch.commit();
+                alert("All data deleted.");
+                resetForm();
+            } catch (e) {
+                console.error(e);
+                alert("Error clearing data.");
+            }
+        }
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+        // --- Helpers ---
+
+        function resetForm() {
+            document.getElementById('salesEntryForm').reset();
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('stuffingDate').value = today;
+            document.getElementById('editId').value = ""; // Clear ID
+            document.getElementById('saveEntryBtn').textContent = "Save Entry & Update Report";
+            document.getElementById('saveEntryBtn').classList.remove('editing');
+            document.querySelectorAll('#salesEntryForm .highlight-error').forEach(el => el.classList.remove('highlight-error'));
+        }
+
+        function sortSalesPersonOptions() {
+            const select = document.getElementById('salesPerson');
+            const options = Array.from(select.options);
+            const dataOptions = options.filter(option => !option.disabled);
+            const placeholder = options.find(option => option.disabled);
+            dataOptions.sort((a, b) => a.value.localeCompare(b.value));
+            select.innerHTML = '';
+            if (placeholder) select.appendChild(placeholder);
+            dataOptions.forEach(option => select.appendChild(option));
+        }
+
+        function filterTable() {
+            const input = document.getElementById('tableSearch');
+            const filter = input.value.toUpperCase();
+            const table = document.getElementById('reportTable');
+            const tr = table.getElementsByTagName('tr');
+
+            for (let i = 1; i < tr.length; i++) {
+                const tdSales = tr[i].getElementsByTagName('td')[1];
+                const tdCust = tr[i].getElementsByTagName('td')[2];
+                const tdLoc = tr[i].getElementsByTagName('td')[3];
+                
+                if (tdSales || tdCust || tdLoc) {
+                    const txtSales = tdSales.textContent || tdSales.innerText;
+                    const txtCust = tdCust.textContent || tdCust.innerText;
+                    const txtLoc = tdLoc.textContent || tdLoc.innerText;
+                    
+                    if (txtSales.toUpperCase().indexOf(filter) > -1 || 
+                        txtCust.toUpperCase().indexOf(filter) > -1 || 
+                        txtLoc.toUpperCase().indexOf(filter) > -1) {
+                        tr[i].style.display = "";
+                    } else {
+                        if(tr[i].parentNode.tagName !== 'TFOOT') tr[i].style.display = "none";
+                    }
+                }
+            }
+        }
+
+        function downloadSalesData() {
+            if (allRecords.length === 0) {
+                alert("Download करने के लिए कोई डेटा उपलब्ध नहीं है।");
+                return;
+            }
+            
+            // Sort for download
+            const sorted = [...allRecords].sort((a, b) => {
+                if (a.salesPerson !== b.salesPerson) return a.salesPerson.localeCompare(b.salesPerson);
+                return a.stuffingDate.localeCompare(b.stuffingDate);
+            });
+            
+            const headers = ["Sr No.", "Sales Person", "Customer Name", "Location", "20\"", "40\"", "Double 20\"", "Stuffing Date", "Priority", "Remarks"];
+            let csvContent = headers.join(",") + "\n";
+            
+            sorted.forEach((record, index) => {
+                const row = [
+                    index + 1,
+                    record.salesPerson,
+                    record.customerName.replace(/"/g, '""'),
+                    record.location.replace(/"/g, '""') || '-',
+                    record.container20 || 0,
+                    record.container40 || 0,
+                    record.containerDbl20 || 0,
+                    formatDate(record.stuffingDate),
+                    record.priority,
+                    record.remarks.replace(/"/g, '""') || '-'
+                ];
+                csvContent += row.map(e => `"${e}"`).join(",") + "\n";
+            });
+            
+            const today = new Date().toISOString().split('T')[0];
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `Export_Planning_Report_${today}.csv`;
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        async function shareReportOnWhatsApp() {
+            if (allRecords.length === 0) {
+                alert("Share करने के लिए कोई डेटा नहीं है।");
+                return;
+            }
+            // Ensure hidden table is up to date
+            renderTable(allRecords, 'hiddenReportTable');
+            
+            const wrapper = document.getElementById('hiddenReportTableWrapper');
+            const header = document.getElementById('hiddenReportHeader');
+            header.textContent = document.getElementById('reportHeader').textContent;
+            
+            wrapper.style.left = '0';
+            wrapper.style.position = 'relative';
+            wrapper.style.width = wrapper.scrollWidth + 'px';
+            
+            try {
+                const canvas = await html2canvas(wrapper, { scale: 2, useCORS: true, backgroundColor: '#E6F7FF' });
+                const imageURL = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.href = imageURL;
+                link.download = `Export_Report_${new Date().toISOString().split('T')[0]}.png`;
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                alert("✅ रिपोर्ट की फोटो डाउनलोड हो गई है। WhatsApp पर मैन्युअल शेयर करें।");
+            } catch (err) {
+                console.error(err);
+                alert("फोटो बनाने में समस्या आई।");
+            } finally {
+                wrapper.style.position = 'absolute';
+                wrapper.style.left = '-9999px';
+                wrapper.style.width = 'auto';
+            }
+        }
     </script>
 </body>
 </html>
