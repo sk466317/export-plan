@@ -38,6 +38,45 @@
         #customerName, #location { text-transform: uppercase; }
         textarea { resize: vertical; min-height: 45px; }
         
+        /* CUSTOM SUGGESTION LIST STYLES (New) */
+        .custom-suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            background: white;
+            border: 1px solid #007bff;
+            border-top: none;
+            z-index: 1000;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            max-height: 250px;
+            overflow-y: auto;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            display: none; /* Hidden by default */
+            border-radius: 0 0 5px 5px;
+        }
+        .custom-suggestions li {
+            padding: 12px 10px; /* Bigger touch target */
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: bold;
+            color: #333;
+            transition: background 0.2s;
+        }
+        /* Hover state */
+        .custom-suggestions li:hover {
+            background-color: #e3f2fd;
+            color: #0056b3;
+        }
+        /* Keyboard Selection State */
+        .suggestion-active {
+            background-color: #b3e5fc !important;
+            color: #0056b3 !important;
+        }
+
         /* Buttons */
         .button-group { display: flex; gap: 6px; margin-top: 12px; flex-wrap: wrap; justify-content: center; }
         .button-group button {
@@ -53,6 +92,9 @@
         #clearAllBtn:hover { background-color: #c82333; }
         #manageMastersBtn { background-color: #6610f2; }
         #manageMastersBtn:hover { background-color: #520dc2; }
+        /* Email Button */
+        #emailBtn { background-color: #0078d4; }
+        #emailBtn:hover { background-color: #005a9e; }
 
         /* Master Management Styles */
         #masterContainer { display: none; margin-top: 20px; padding: 15px; border: 3px solid #6610f2; border-radius: 8px; background-color: #f3e5f5; }
@@ -201,6 +243,7 @@
                     <thead>
                         <tr>
                             <th>Customer Name</th>
+                            <th>Associated Sales Person</th>
                             <th>Saved Locations</th>
                             <th>Action</th>
                         </tr>
@@ -218,8 +261,20 @@
                     <input type="hidden" id="editId" value="">
                     
                     <div class="input-group">
+                        <!-- REORDERED: Customer -> Location -> Sales Person -->
+                        <div class="input-item" style="position: relative;">
+                            <label for="customerName">Customer Name:</label>
+                            <input type="text" id="customerName" name="customerName" required autocomplete="off" placeholder="Start typing...">
+                            <!-- NEW LIST CONTAINER -->
+                            <ul id="customerList" class="custom-suggestions"></ul>
+                        </div>
                         <div class="input-item">
-                            <label for="salesPerson">Sales Person:</label>
+                            <label for="location">Location (Filtered by Customer):</label>
+                            <input type="text" id="location" name="location" list="locationSuggestions" autocomplete="off" placeholder="Select or type new...">
+                            <datalist id="locationSuggestions"></datalist>
+                        </div>
+                        <div class="input-item">
+                            <label for="salesPerson">Sales Person (Auto-Set):</label>
                             <select id="salesPerson" name="salesPerson" required>
                                 <option value="" disabled selected>Select Sales Person</option>
                                 <option value="Anurag Pandey">Anurag Pandey</option>
@@ -230,16 +285,6 @@
                                 <option value="Mohik">Mohik</option>
                                 <option value="Rajesh Kumar">Rajesh Kumar</option>
                             </select>
-                        </div>
-                        <div class="input-item">
-                            <label for="customerName">Customer Name:</label>
-                            <input type="text" id="customerName" name="customerName" list="customerSuggestions" required autocomplete="off" placeholder="Start typing...">
-                            <datalist id="customerSuggestions"></datalist>
-                        </div>
-                        <div class="input-item">
-                            <label for="location">Location (Filtered by Customer):</label>
-                            <input type="text" id="location" name="location" list="locationSuggestions" autocomplete="off" placeholder="Select or type new...">
-                            <datalist id="locationSuggestions"></datalist>
                         </div>
                     </div>
                     <div class="input-group">
@@ -277,6 +322,7 @@
                         <button type="submit" id="saveEntryBtn">Save Entry & Update Report</button>
                         <button type="button" id="downloadCsvBtn" onclick="downloadSalesData()">Download Report (CSV)</button>
                         <button type="button" id="shareReportBtn" onclick="shareReportOnWhatsApp()">Share Report (Photo)</button>
+                        <button type="button" id="emailBtn" onclick="emailReport()">Email Report (Outlook)</button>
                         <button type="button" id="clearAllBtn" onclick="clearAllData()">Delete All Data</button>
                         <button type="button" id="manageMastersBtn" onclick="toggleMasterView()">Manage Masters</button>
                     </div>
@@ -364,7 +410,7 @@
 
         // Local cache
         let allRecords = [];
-        let masterData = {}; // Format: { "CUSTOMER_NAME": ["LOC1", "LOC2"] }
+        let masterData = {}; // Format: { "CUSTOMER_NAME": { locations: ["LOC1"], salesPerson: "Name" } }
 
         // ==========================================
         //  APP LOGIC
@@ -407,14 +453,17 @@
                     document.getElementById('loadingOverlay').style.display = 'none';
                 });
 
-                // 2. Listen to Master Data
+                // 2. Listen to Master Data (With Sales Person)
                 MASTER_COLLECTION.onSnapshot((snapshot) => {
                     masterData = {};
                     snapshot.docs.forEach(doc => {
                         const data = doc.data();
-                        masterData[doc.id] = data.locations || [];
+                        masterData[doc.id] = {
+                            locations: data.locations || [],
+                            salesPerson: data.salesPerson || ""
+                        };
                     });
-                    updateCustomerDatalist();
+                    // Removed updateCustomerDatalist() as we use custom list now
                     renderMasterTable();
                 });
 
@@ -438,69 +487,163 @@
             }
         }
 
-        function updateCustomerDatalist() {
-            const datalist = document.getElementById('customerSuggestions');
-            datalist.innerHTML = '';
-            Object.keys(masterData).sort().forEach(cust => {
-                const op = document.createElement('option');
-                op.value = cust;
-                datalist.appendChild(op);
-            });
+        // --- UPDATED CUSTOM LIST LOGIC (WITH ARROW KEY NAVIGATION) ---
+        
+        const custInput = document.getElementById('customerName');
+        const suggestionBox = document.getElementById('customerList');
+        let currentFocus = -1; // New: Track active item
+
+        // Event 1: Typing
+        custInput.addEventListener('input', function() {
+            const val = this.value.toUpperCase();
+            currentFocus = -1; // Reset focus on new input
+            renderCustomerSuggestions(val);
+            handleCustomerDependentFields(val); // Run dependency logic
+        });
+
+        // Event 2: Focus (Show list)
+        custInput.addEventListener('focus', function() {
+            currentFocus = -1; // Reset focus
+            renderCustomerSuggestions(this.value.toUpperCase());
+        });
+
+        // Event 3: Keydown (Arrow keys & Enter)
+        custInput.addEventListener('keydown', function(e) {
+            let x = suggestionBox.getElementsByTagName("li");
+            if (!x.length) return; // If list is empty/closed, do nothing
+
+            if (e.keyCode === 40) { // Arrow Down
+                currentFocus++;
+                addActive(x);
+            } else if (e.keyCode === 38) { // Arrow Up
+                currentFocus--;
+                addActive(x);
+            } else if (e.keyCode === 13) { // Enter
+                e.preventDefault(); // Stop form submission temporarily
+                if (currentFocus > -1) {
+                    if (x[currentFocus]) x[currentFocus].click(); // Simulate click on item
+                }
+            }
+        });
+
+        // Helper: Highlight active item
+        function addActive(x) {
+            if (!x) return false;
+            removeActive(x);
+            if (currentFocus >= x.length) currentFocus = 0;
+            if (currentFocus < 0) currentFocus = (x.length - 1);
+            x[currentFocus].classList.add("suggestion-active");
+            // Simple scroll logic
+            x[currentFocus].scrollIntoView({ block: 'nearest' });
         }
 
-        // --- UPDATED LISTENER FOR AUTO-FILL ---
-        document.getElementById('customerName').addEventListener('input', function() {
-            const custName = this.value.trim().toUpperCase();
+        // Helper: Remove highlight
+        function removeActive(x) {
+            for (let i = 0; i < x.length; i++) {
+                x[i].classList.remove("suggestion-active");
+            }
+        }
+
+        // Event 4: Outside Click (Close list)
+        document.addEventListener('click', function(e) {
+            if (e.target !== custInput && e.target !== suggestionBox) {
+                suggestionBox.style.display = 'none';
+            }
+        });
+
+        function renderCustomerSuggestions(filterText) {
+            const customers = Object.keys(masterData).sort();
+            const matches = customers.filter(c => c.includes(filterText));
+            
+            suggestionBox.innerHTML = '';
+            if (matches.length > 0) {
+                matches.forEach(cust => {
+                    const li = document.createElement('li');
+                    li.textContent = cust;
+                    li.onclick = () => {
+                        custInput.value = cust;
+                        suggestionBox.style.display = 'none';
+                        handleCustomerDependentFields(cust); // Run logic immediately on click
+                    };
+                    suggestionBox.appendChild(li);
+                });
+                suggestionBox.style.display = 'block';
+            } else {
+                suggestionBox.style.display = 'none';
+            }
+        }
+
+        // Logic split from the old event listener
+        function handleCustomerDependentFields(custName) {
             const locInput = document.getElementById('location');
             const locDatalist = document.getElementById('locationSuggestions');
+            const salesPersonSelect = document.getElementById('salesPerson');
             
             // Clear current location options
             locDatalist.innerHTML = '';
             
             if (masterData[custName]) {
-                const locations = masterData[custName];
+                const data = masterData[custName];
+                const locations = data.locations;
                 
-                // Populate options
+                // 1. Auto-Select Sales Person
+                if (data.salesPerson) {
+                    salesPersonSelect.value = data.salesPerson;
+                }
+
+                // 2. Populate Locations
                 locations.forEach(loc => {
                     const op = document.createElement('option');
                     op.value = loc;
                     locDatalist.appendChild(op);
                 });
 
-                // AUTO-FILL LOGIC: If exactly 1 location, auto-select it
+                // 3. Auto-Fill Location Logic
                 if (locations.length === 1) {
                     locInput.value = locations[0];
                 } 
-                // If multiple locations, clear the field so user must choose
-                // (Only clear if the current value is not in the valid list)
                 else if (locations.length > 1) {
+                    // Only clear if current value isn't valid for this customer
                     if (!locations.includes(locInput.value.toUpperCase())) {
                         locInput.value = ""; 
                     }
                 }
             }
-        });
+        }
 
-        async function updateMasterData(customer, location) {
+        // UPDATED: Now saves Sales Person too
+        async function updateMasterData(customer, location, salesPerson) {
             if (!customer) return;
             const custKey = customer.toUpperCase().trim();
             const locKey = location ? location.toUpperCase().trim() : "";
             
-            // Check if customer exists in master
             const docRef = MASTER_COLLECTION.doc(custKey);
             const docSnap = await docRef.get();
 
+            let updatePayload = {};
+            let isNew = false;
+
             if (!docSnap.exists) {
-                // Create new master record
-                await docRef.set({
+                isNew = true;
+                updatePayload = {
                     customerName: custKey,
-                    locations: locKey ? [locKey] : []
-                });
-            } else if (locKey) {
-                // Add location if not exists (Array Union)
-                await docRef.update({
-                    locations: firebase.firestore.FieldValue.arrayUnion(locKey)
-                });
+                    locations: locKey ? [locKey] : [],
+                    salesPerson: salesPerson || ""
+                };
+            } else {
+                if (locKey) {
+                    updatePayload.locations = firebase.firestore.FieldValue.arrayUnion(locKey);
+                }
+                // Always update sales person if provided (latest entry overwrites)
+                if (salesPerson) {
+                    updatePayload.salesPerson = salesPerson;
+                }
+            }
+
+            if (isNew) {
+                await docRef.set(updatePayload);
+            } else if (Object.keys(updatePayload).length > 0) {
+                await docRef.update(updatePayload);
             }
         }
 
@@ -509,7 +652,10 @@
             const loc = document.getElementById('newMasterLocation').value;
             if(!cust) return alert("Customer Name is required");
             
-            await updateMasterData(cust, loc);
+            // Note: Manual add currently doesn't ask for Sales Person, 
+            // but it will be learned automatically during daily entry.
+            await updateMasterData(cust, loc, null);
+            
             document.getElementById('newMasterCustomer').value = '';
             document.getElementById('newMasterLocation').value = '';
             alert("Master updated!");
@@ -531,7 +677,6 @@
                     const data = new Uint8Array(e.target.result);
                     const workbook = XLSX.read(data, { type: 'array' });
                     const firstSheet = workbook.SheetNames[0];
-                    // Read array of arrays: [[Cust, Loc], [Cust, Loc]]
                     const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet], { header: 1 });
 
                     let count = 0;
@@ -546,18 +691,19 @@
                         const custRaw = row[0] ? String(row[0]).trim() : "";
                         const locRaw = row[1] ? String(row[1]).trim() : "";
                         
-                        // Skip header if it exists
+                        // Skip header
                         if(i === 0 && custRaw.toUpperCase().includes("CUSTOMER")) continue;
                         if(!custRaw) continue;
 
-                        await updateMasterData(custRaw, locRaw);
+                        // Bulk upload doesn't have sales person column yet, so passing null
+                        await updateMasterData(custRaw, locRaw, null);
                         count++;
                     }
 
                     document.getElementById('loadingOverlay').style.display = 'none';
                     document.getElementById('loadingOverlay').innerText = "Connecting to Database...";
                     alert(`Successfully uploaded ${count} customer records.`);
-                    fileInput.value = ""; // clear input
+                    fileInput.value = ""; 
                     
                 } catch (error) {
                     console.error(error);
@@ -580,10 +726,13 @@
             
             Object.keys(masterData).sort().forEach(cust => {
                 const tr = document.createElement('tr');
-                const locs = masterData[cust].map(l => `<span class="tag">${l}</span>`).join(" ");
+                const data = masterData[cust];
+                const locs = data.locations.map(l => `<span class="tag">${l}</span>`).join(" ");
+                const sp = data.salesPerson ? `<span style="color:blue; font-weight:bold;">${data.salesPerson}</span>` : '<span style="color:#ccc;">-</span>';
                 
                 tr.innerHTML = `
                     <td style="font-weight:bold;">${cust}</td>
+                    <td>${sp}</td>
                     <td>${locs || '<span style="color:#999;font-size:0.7em;">No Loc</span>'}</td>
                     <td><button onclick="deleteMaster('${cust}')" style="background:#dc3545; color:white; border:none; border-radius:3px; cursor:pointer;">Del</button></td>
                 `;
@@ -704,9 +853,10 @@
 
             const custName = form.customerName.value.trim().toUpperCase();
             const locName = form.location.value.trim().toUpperCase();
+            const spName = form.salesPerson.value;
 
             const formData = {
-                salesPerson: form.salesPerson.value,
+                salesPerson: spName,
                 customerName: custName,
                 location: locName,
                 container20: form.container20.value.trim(),
@@ -749,8 +899,8 @@
                     await SALES_COLLECTION.add(formData);
                 }
                 
-                // AUTO-LEARN MASTER DATA
-                await updateMasterData(custName, locName);
+                // AUTO-LEARN MASTER DATA (Includes Sales Person)
+                await updateMasterData(custName, locName, spName);
 
                 resetForm();
             } catch (e) {
@@ -873,6 +1023,97 @@
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+        }
+
+        // --- NEW: EMAIL REPORT (OUTLOOK COPY) ---
+        async function emailReport() {
+            const selectedDate = document.getElementById('viewDate').value;
+            const visibleRecords = allRecords.filter(r => (r.entryDate || r.stuffingDate) === selectedDate);
+
+            if (visibleRecords.length === 0) {
+                alert("Email karne ke liye is date par koi data nahi hai.");
+                return;
+            }
+
+            visibleRecords.sort((a, b) => a.salesPerson.localeCompare(b.salesPerson));
+
+            let t20=0, t40=0, tDbl=0;
+            
+            // Build Outlook Table
+            let html = `
+                <table border="1" style="border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; font-size: 12px; border: 1px solid black;">
+                    <tr style="background-color: #333; color: white;">
+                        <th style="padding:5px; border:1px solid black;">Sr No.</th>
+                        <th style="padding:5px; border:1px solid black;">Sales Person</th>
+                        <th style="padding:5px; border:1px solid black;">Customer Name</th>
+                        <th style="padding:5px; border:1px solid black;">Location</th>
+                        <th style="padding:5px; border:1px solid black;">20"</th>
+                        <th style="padding:5px; border:1px solid black;">40"</th>
+                        <th style="padding:5px; border:1px solid black;">Double 20"</th>
+                        <th style="padding:5px; border:1px solid black;">Stuffing Date</th>
+                        <th style="padding:5px; border:1px solid black;">Priority</th>
+                        <th style="padding:5px; border:1px solid black;">Remarks</th>
+                    </tr>`;
+            
+            visibleRecords.forEach((r, i) => {
+                const c20 = parseInt(r.container20)||0;
+                const c40 = parseInt(r.container40)||0;
+                const cDbl = parseInt(r.containerDbl20)||0;
+                t20+=c20; t40+=c40; tDbl+=cDbl;
+                
+                const bg = r.priority === 'High' ? '#b5ff0d' : '#ffffff';
+                
+                html += `<tr style="background-color: ${bg}; color: black;">
+                    <td style="text-align:center; padding:5px; border:1px solid black;">${i+1}</td>
+                    <td style="padding:5px; border:1px solid black;">${r.salesPerson}</td>
+                    <td style="padding:5px; border:1px solid black;">${r.customerName}</td>
+                    <td style="padding:5px; border:1px solid black;">${r.location||'-'}</td>
+                    <td style="text-align:center; padding:5px; border:1px solid black;">${c20||''}</td>
+                    <td style="text-align:center; padding:5px; border:1px solid black;">${c40||''}</td>
+                    <td style="text-align:center; padding:5px; border:1px solid black;">${cDbl||''}</td>
+                    <td style="text-align:center; padding:5px; border:1px solid black;">${formatDate(r.stuffingDate)}</td>
+                    <td style="text-align:center; padding:5px; border:1px solid black;">${r.priority}</td>
+                    <td style="padding:5px; border:1px solid black;">${r.remarks||'-'}</td>
+                </tr>`;
+            });
+
+            const totalTEU = t20 + (t40*2) + (tDbl*2);
+
+            html += `<tr style="background-color: #e0e0e0; font-weight: bold; color: black;">
+                <td colspan="4" style="text-align:right; padding:5px; border:1px solid black;">GRAND TOTAL:</td>
+                <td style="text-align:center; padding:5px; border:1px solid black;">${t20}</td>
+                <td style="text-align:center; padding:5px; border:1px solid black;">${t40}</td>
+                <td style="text-align:center; padding:5px; border:1px solid black;">${tDbl}</td>
+                <td colspan="3" style="text-align:center; background-color:#d1e7dd; color:#0f5132; padding:5px; border:1px solid black;">TOTAL TEUs: ${totalTEU}</td>
+            </tr></table><br>
+            <p style="font-family: Arial, sans-serif; font-size: 13px; color: #333;">
+                Thanks and Regards,<br>
+                <strong>Hind Terminals</strong><br>
+                Customer Service Team
+            </p>`;
+
+            // COPY TO CLIPBOARD
+            try {
+                const blob = new Blob([html], {type: "text/html"});
+                const textBlob = new Blob([html.replace(/<[^>]+>/g, '')], {type: "text/plain"});
+                const data = [new ClipboardItem({ "text/html": blob, "text/plain": textBlob })];
+                
+                await navigator.clipboard.write(data);
+                
+                // OPEN MAILTO
+                const subject = `HTPL Daily EXIM Movement Planning :: (${formatDate(selectedDate)})`;
+                const body = "-";
+                const mailtoLink = `mailto:tufan.singh@hindcarriers.com;hcpl.ludhiana@hindcarriers.com;kilaraipur@hindcarriers.com;Marketing.Ludhiana@hindterminals.com;customerserviceludhiana@hindterminals.com;sukhvir.dhankhar@hindcarriers.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                
+                window.location.href = mailtoLink;
+                
+                alert("✅ Report Copied! \n\nOutlook/Mail app has opened. \nJust press 'Ctrl + V' (Paste) in the email body.");
+                
+            } catch (err) {
+                console.error("Clipboard Error:", err);
+                // Fallback for secure context issues
+                alert("Clipboard copy failed (Browser Restriction). Please take a screenshot instead.");
+            }
         }
 
         async function shareReportOnWhatsApp() {
