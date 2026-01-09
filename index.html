@@ -9,6 +9,11 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
+    <!-- EXCEL PARSER (SheetJS) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- HTML TO CANVAS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <style>
         /* General Styles */
@@ -46,13 +51,50 @@
         #shareReportBtn { background-color: #25D366; }
         #clearAllBtn { background-color: #dc3545; }
         #clearAllBtn:hover { background-color: #c82333; }
+        #manageMastersBtn { background-color: #6610f2; }
+        #manageMastersBtn:hover { background-color: #520dc2; }
+
+        /* Master Management Styles */
+        #masterContainer { display: none; margin-top: 20px; padding: 15px; border: 3px solid #6610f2; border-radius: 8px; background-color: #f3e5f5; }
+        #masterContainer h2 { color: #4a148c; text-align: center; }
+        .master-section { background: white; padding: 10px; border-radius: 5px; margin-bottom: 10px; border: 1px solid #ddd; }
+        .master-form { display: flex; gap: 10px; margin-bottom: 5px; align-items: flex-end; }
+        .master-table { width: 100%; border-collapse: collapse; background: white; font-size: 0.8rem; }
+        .master-table th, .master-table td { border: 1px solid #ddd; padding: 6px; text-align: left; }
+        .master-table th { background: #4a148c; color: white; }
+        .tag { display: inline-block; background: #e0e0e0; padding: 2px 6px; border-radius: 4px; margin: 1px; font-size: 0.75rem; }
         
         /* Report Section */
         .report-container { margin-top: 20px; padding: 12px; border: 4px solid #007BFF; border-radius: 8px; background-color: #51f1ff; }
         .report-container h2 { color: #333; margin-bottom: 10px; text-align: center; font-weight: bold; font-size: 1.2rem; }
         
-        /* Search Box */
-        .search-box { width: 100%; padding: 8px; margin-bottom: 10px; border: 2px solid #007bff; border-radius: 4px; font-size: 0.9rem; font-weight: bold; background-color: #fff; box-sizing: border-box; }
+        /* DATE FILTER STYLING (New) */
+        .date-filter-container {
+            background-color: #e3f2fd;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            text-align: center;
+            border: 2px solid #007bff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+        }
+        .date-filter-container label {
+            margin: 0;
+            font-size: 1.1rem;
+            color: #0056b3;
+            font-weight: 800;
+        }
+        .date-filter-container input[type="date"] {
+            width: auto;
+            padding: 8px 12px;
+            border: 2px solid #0056b3;
+            font-size: 1rem;
+            background: #fff;
+            cursor: pointer;
+        }
 
         #reportTableContainer { overflow-x: auto; margin-top: 8px; background-color: white; border-radius: 5px; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05); }
         #reportTable { width: 100%; border-collapse: collapse; font-size: 0.75rem; table-layout: auto; }
@@ -89,6 +131,8 @@
             .button-group button { flex: 1 1 100%; }
             #reportTable { font-size: 0.7rem; }
             #reportTable th, #reportTable td { padding: 3px; }
+            .date-filter-container { flex-direction: column; gap: 5px; }
+            .master-form { flex-direction: column; }
         }
         
         .highlight-error { border: 2px solid red !important; background-color: #ffe5e5 !important; box-shadow: 0 0 5px rgba(255, 0, 0, 0.5) !important; }
@@ -110,108 +154,165 @@
             display: flex; justify-content: center; align-items: center;
             font-size: 1.5rem; font-weight: bold; color: #007bff;
         }
+        
+        .bulk-upload-area { border: 2px dashed #4a148c; padding: 10px; border-radius: 5px; background: #fafafa; text-align: center; margin-bottom: 15px; }
     </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
     <div id="loadingOverlay">Connecting to Database...</div>
 
     <div class="main-container">
-        <div class="entry-container">
-            <h2 id="entryHeader">Daily Export Planning</h2>
-            <form id="salesEntryForm">
-                <!-- ID for Editing (Firestore Document ID) -->
-                <input type="hidden" id="editId" value="">
-                
-                <div class="input-group">
-                    <div class="input-item">
-                        <label for="salesPerson">Sales Person:</label>
-                        <select id="salesPerson" name="salesPerson" required>
-                            <option value="" disabled selected>Select Sales Person</option>
-                            <option value="Anurag Pandey">Anurag Pandey</option>
-                            <option value="Chirag Rana">Chirag Rana</option>
-                            <option value="Damanjeet Singh">Damanjeet Singh</option>
-                            <option value="Harsimran">Harsimran</option>
-                            <option value="Kunal Sahi">Kunal Sahi</option>
-                            <option value="Mohik">Mohik</option>
-                            <option value="Rajesh Kumar">Rajesh Kumar</option>
-                        </select>
-                    </div>
-                    <div class="input-item">
-                        <label for="customerName">Customer Name:</label>
-                        <input type="text" id="customerName" name="customerName" list="customerSuggestions" required autocomplete="off">
-                        <datalist id="customerSuggestions"></datalist>
-                    </div>
-                    <div class="input-item">
-                        <label for="location">Location (Optional):</label>
-                        <input type="text" id="location" name="location" list="locationSuggestions" autocomplete="off">
-                        <datalist id="locationSuggestions"></datalist>
-                    </div>
-                </div>
-                <div class="input-group">
-                    <div class="input-item">
-                        <label for="container20">20" Containers:</label>
-                        <input type="number" id="container20" name="container20" min="0" placeholder="e.g., 2">
-                    </div>
-                    <div class="input-item">
-                        <label for="container40">40" Containers:</label>
-                        <input type="number" id="container40" name="container40" min="0" placeholder="e.g., 1">
-                    </div>
-                    <div class="input-item">
-                        <label for="containerDbl20">Double 20" Containers:</label>
-                        <input type="number" id="containerDbl20" name="containerDbl20" min="0" placeholder="e.g., 0">
-                    </div>
-                </div>
-                <div class="input-group">
-                    <div class="input-item">
-                        <label for="stuffingDate">Stuffing Date:</label>
-                        <input type="date" id="stuffingDate" name="stuffingDate" required>
-                    </div>
-                    <div class="input-item">
-                        <label for="priority">Priority:</label>
-                        <select id="priority" name="priority" required>
-                            <option value="Normal" selected>Normal</option>
-                            <option value="High">High</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="input-item" style="flex: 1 1 100%; min-width: 100%;">
-                    <label for="remarks">Remarks (Optional):</label>
-                    <textarea id="remarks" name="remarks"></textarea>
-                </div>
-                <div class="button-group">
-                    <button type="submit" id="saveEntryBtn">Save Entry & Update Report</button>
-                    <button type="button" id="downloadCsvBtn" onclick="downloadSalesData()">Download Report (CSV)</button>
-                    <button type="button" id="shareReportBtn" onclick="shareReportOnWhatsApp()">Share Report (Photo)</button>
-                    <button type="button" id="clearAllBtn" onclick="clearAllData()">Delete All Data</button>
-                </div>
-            </form>
-        </div>
         
-        <div class="report-container">
-            <h2 id="reportHeader">HTPL Daily EXIM Movement Planning </h2>
-            <input type="text" id="tableSearch" class="search-box" placeholder="Search Filter: Type Name, Location or Sales Person..." onkeyup="filterTable()">
+        <!-- MASTER MANAGEMENT SECTION -->
+        <div id="masterContainer">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <h2>Manage Customer Masters</h2>
+                <button onclick="toggleMasterView()" style="background:#dc3545; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">Close X</button>
+            </div>
             
-            <div id="reportTableContainer">
-                <table id="reportTable">
+            <!-- Manual Entry -->
+            <div class="master-section">
+                <h4 style="margin:0 0 5px 0; color:#4a148c;">Add Single Entry</h4>
+                <div class="master-form">
+                    <div class="input-item">
+                        <label>Customer Name:</label>
+                        <input type="text" id="newMasterCustomer" placeholder="Enter Customer Name">
+                    </div>
+                    <div class="input-item">
+                        <label>Location:</label>
+                        <input type="text" id="newMasterLocation" placeholder="Enter Location">
+                    </div>
+                    <button type="button" onclick="addManualMaster()" style="background:#28a745; color:white; border:none; padding:8px 15px; border-radius:4px; font-weight:bold; cursor:pointer;">Add</button>
+                </div>
+            </div>
+
+            <!-- Bulk Upload -->
+            <div class="master-section">
+                <h4 style="margin:0 0 5px 0; color:#4a148c;">Bulk Upload (Excel)</h4>
+                <div class="bulk-upload-area">
+                    <p style="margin:0 0 5px 0; font-size:0.8rem; color:#666;">Format: Column A = Customer Name | Column B = Location</p>
+                    <input type="file" id="bulkMasterUpload" accept=".xlsx, .xls" style="display:inline-block; width:auto; border:none;" />
+                    <button onclick="handleBulkUpload()" style="background:#007bff; color:white; border:none; padding:5px 15px; border-radius:4px; cursor:pointer;">Upload Excel</button>
+                </div>
+            </div>
+
+            <div style="overflow-x:auto; max-height:300px; overflow-y:auto;">
+                <table class="master-table" id="masterTable">
                     <thead>
                         <tr>
-                            <th>Sr No.</th>
-                            <th>Sales Person</th>
                             <th>Customer Name</th>
-                            <th>Location</th>
-                            <th>20"</th>
-                            <th>40"</th>
-                            <th>Double 20"</th>
-                            <th>Stuffing Date</th>
-                            <th>Priority</th>
-                            <th>Remarks</th>
-                            <th>Actions</th>
+                            <th>Saved Locations</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
-                    <tfoot></tfoot>
                 </table>
+            </div>
+        </div>
+
+        <div id="mainAppContent">
+            <div class="entry-container">
+                <h2 id="entryHeader">Daily Export Planning</h2>
+                <form id="salesEntryForm">
+                    <!-- ID for Editing (Firestore Document ID) -->
+                    <input type="hidden" id="editId" value="">
+                    
+                    <div class="input-group">
+                        <div class="input-item">
+                            <label for="salesPerson">Sales Person:</label>
+                            <select id="salesPerson" name="salesPerson" required>
+                                <option value="" disabled selected>Select Sales Person</option>
+                                <option value="Anurag Pandey">Anurag Pandey</option>
+                                <option value="Chirag Rana">Chirag Rana</option>
+                                <option value="Damanjeet Singh">Damanjeet Singh</option>
+                                <option value="Harsimran">Harsimran</option>
+                                <option value="Kunal Sahi">Kunal Sahi</option>
+                                <option value="Mohik">Mohik</option>
+                                <option value="Rajesh Kumar">Rajesh Kumar</option>
+                            </select>
+                        </div>
+                        <div class="input-item">
+                            <label for="customerName">Customer Name:</label>
+                            <input type="text" id="customerName" name="customerName" list="customerSuggestions" required autocomplete="off" placeholder="Start typing...">
+                            <datalist id="customerSuggestions"></datalist>
+                        </div>
+                        <div class="input-item">
+                            <label for="location">Location (Filtered by Customer):</label>
+                            <input type="text" id="location" name="location" list="locationSuggestions" autocomplete="off" placeholder="Select or type new...">
+                            <datalist id="locationSuggestions"></datalist>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <div class="input-item">
+                            <label for="container20">20" Containers:</label>
+                            <input type="number" id="container20" name="container20" min="0" placeholder="e.g., 2">
+                        </div>
+                        <div class="input-item">
+                            <label for="container40">40" Containers:</label>
+                            <input type="number" id="container40" name="container40" min="0" placeholder="e.g., 1">
+                        </div>
+                        <div class="input-item">
+                            <label for="containerDbl20">Double 20" Containers:</label>
+                            <input type="number" id="containerDbl20" name="containerDbl20" min="0" placeholder="e.g., 0">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <div class="input-item">
+                            <label for="stuffingDate">Stuffing Date (Expected):</label>
+                            <input type="date" id="stuffingDate" name="stuffingDate" required>
+                        </div>
+                        <div class="input-item">
+                            <label for="priority">Priority:</label>
+                            <select id="priority" name="priority" required>
+                                <option value="Normal" selected>Normal</option>
+                                <option value="High">High</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="input-item" style="flex: 1 1 100%; min-width: 100%;">
+                        <label for="remarks">Remarks (Optional):</label>
+                        <textarea id="remarks" name="remarks"></textarea>
+                    </div>
+                    <div class="button-group">
+                        <button type="submit" id="saveEntryBtn">Save Entry & Update Report</button>
+                        <button type="button" id="downloadCsvBtn" onclick="downloadSalesData()">Download Report (CSV)</button>
+                        <button type="button" id="shareReportBtn" onclick="shareReportOnWhatsApp()">Share Report (Photo)</button>
+                        <button type="button" id="clearAllBtn" onclick="clearAllData()">Delete All Data</button>
+                        <button type="button" id="manageMastersBtn" onclick="toggleMasterView()">Manage Masters</button>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="report-container">
+                <h2 id="reportHeader">HTPL Daily EXIM Movement Planning </h2>
+                
+                <!-- DATE FILTER Linked to Entry Date -->
+                <div class="date-filter-container">
+                    <label for="viewDate">📅 SELECT ENTRY DATE TO VIEW REPORT:</label>
+                    <input type="date" id="viewDate" onchange="updateTableDisplay()">
+                </div>
+                
+                <div id="reportTableContainer">
+                    <table id="reportTable">
+                        <thead>
+                            <tr>
+                                <th>Sr No.</th>
+                                <th>Sales Person</th>
+                                <th>Customer Name</th>
+                                <th>Location</th>
+                                <th>20"</th>
+                                <th>40"</th>
+                                <th>Double 20"</th>
+                                <th>Stuffing Date</th>
+                                <th>Priority</th>
+                                <th>Remarks</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                        <tfoot></tfoot>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -257,11 +358,13 @@
         const db = firebase.firestore();
         const auth = firebase.auth();
 
-        // Path to store shared public data
-        const COLLECTION_PATH = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('sales_records');
+        // PATHS
+        const SALES_COLLECTION = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('sales_records');
+        const MASTER_COLLECTION = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('customer_masters');
 
-        // Local cache of records
+        // Local cache
         let allRecords = [];
+        let masterData = {}; // Format: { "CUSTOMER_NAME": ["LOC1", "LOC2"] }
 
         // ==========================================
         //  APP LOGIC
@@ -282,9 +385,10 @@
             const todayISO = new Date().toISOString().split('T')[0];
             const todayFormatted = getTodayDateFormatted();
             
+            // Set Default Dates
             document.getElementById('entryHeader').textContent = `Daily Export Planning (${todayFormatted})`;
-            document.getElementById('reportHeader').textContent = `Daily Export Planning :: (${todayFormatted})`;
             document.getElementById('stuffingDate').value = todayISO;
+            document.getElementById('viewDate').value = todayISO;
             
             sortSalesPersonOptions();
 
@@ -296,20 +400,22 @@
                     await auth.signInAnonymously();
                 }
 
-                // Real-time listener
-                COLLECTION_PATH.onSnapshot((snapshot) => {
+                // 1. Listen to Sales Records
+                SALES_COLLECTION.onSnapshot((snapshot) => {
                     allRecords = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    
-                    // Update UI
-                    renderTable(allRecords);
-                    renderTable(allRecords, 'hiddenReportTable');
-                    deriveSuggestions(); // Populate datalists from DB data
-                    
+                    updateTableDisplay();
                     document.getElementById('loadingOverlay').style.display = 'none';
-                }, (error) => {
-                    console.error("Data sync error:", error);
-                    alert("Error syncing data. Please check connection.");
-                    document.getElementById('loadingOverlay').style.display = 'none';
+                });
+
+                // 2. Listen to Master Data
+                MASTER_COLLECTION.onSnapshot((snapshot) => {
+                    masterData = {};
+                    snapshot.docs.forEach(doc => {
+                        const data = doc.data();
+                        masterData[doc.id] = data.locations || [];
+                    });
+                    updateCustomerDatalist();
+                    renderMasterTable();
                 });
 
             } catch (err) {
@@ -318,7 +424,189 @@
             }
         });
 
+        // --- Master Data Functions ---
+
+        function toggleMasterView() {
+            const container = document.getElementById('masterContainer');
+            const mainContent = document.getElementById('mainAppContent');
+            if (container.style.display === 'none' || !container.style.display) {
+                container.style.display = 'block';
+                mainContent.style.display = 'none';
+            } else {
+                container.style.display = 'none';
+                mainContent.style.display = 'block';
+            }
+        }
+
+        function updateCustomerDatalist() {
+            const datalist = document.getElementById('customerSuggestions');
+            datalist.innerHTML = '';
+            Object.keys(masterData).sort().forEach(cust => {
+                const op = document.createElement('option');
+                op.value = cust;
+                datalist.appendChild(op);
+            });
+        }
+
+        // --- UPDATED LISTENER FOR AUTO-FILL ---
+        document.getElementById('customerName').addEventListener('input', function() {
+            const custName = this.value.trim().toUpperCase();
+            const locInput = document.getElementById('location');
+            const locDatalist = document.getElementById('locationSuggestions');
+            
+            // Clear current location options
+            locDatalist.innerHTML = '';
+            
+            if (masterData[custName]) {
+                const locations = masterData[custName];
+                
+                // Populate options
+                locations.forEach(loc => {
+                    const op = document.createElement('option');
+                    op.value = loc;
+                    locDatalist.appendChild(op);
+                });
+
+                // AUTO-FILL LOGIC: If exactly 1 location, auto-select it
+                if (locations.length === 1) {
+                    locInput.value = locations[0];
+                } 
+                // If multiple locations, clear the field so user must choose
+                // (Only clear if the current value is not in the valid list)
+                else if (locations.length > 1) {
+                    if (!locations.includes(locInput.value.toUpperCase())) {
+                        locInput.value = ""; 
+                    }
+                }
+            }
+        });
+
+        async function updateMasterData(customer, location) {
+            if (!customer) return;
+            const custKey = customer.toUpperCase().trim();
+            const locKey = location ? location.toUpperCase().trim() : "";
+            
+            // Check if customer exists in master
+            const docRef = MASTER_COLLECTION.doc(custKey);
+            const docSnap = await docRef.get();
+
+            if (!docSnap.exists) {
+                // Create new master record
+                await docRef.set({
+                    customerName: custKey,
+                    locations: locKey ? [locKey] : []
+                });
+            } else if (locKey) {
+                // Add location if not exists (Array Union)
+                await docRef.update({
+                    locations: firebase.firestore.FieldValue.arrayUnion(locKey)
+                });
+            }
+        }
+
+        async function addManualMaster() {
+            const cust = document.getElementById('newMasterCustomer').value;
+            const loc = document.getElementById('newMasterLocation').value;
+            if(!cust) return alert("Customer Name is required");
+            
+            await updateMasterData(cust, loc);
+            document.getElementById('newMasterCustomer').value = '';
+            document.getElementById('newMasterLocation').value = '';
+            alert("Master updated!");
+        }
+
+        async function handleBulkUpload() {
+            const fileInput = document.getElementById('bulkMasterUpload');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert("Please select an Excel file first.");
+                return;
+            }
+
+            const reader = new FileReader();
+            
+            reader.onload = async function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheet = workbook.SheetNames[0];
+                    // Read array of arrays: [[Cust, Loc], [Cust, Loc]]
+                    const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet], { header: 1 });
+
+                    let count = 0;
+                    
+                    document.getElementById('loadingOverlay').innerText = "Uploading Bulk Data...";
+                    document.getElementById('loadingOverlay').style.display = 'flex';
+
+                    for (let i = 0; i < jsonData.length; i++) {
+                        const row = jsonData[i];
+                        if (row.length === 0) continue;
+
+                        const custRaw = row[0] ? String(row[0]).trim() : "";
+                        const locRaw = row[1] ? String(row[1]).trim() : "";
+                        
+                        // Skip header if it exists
+                        if(i === 0 && custRaw.toUpperCase().includes("CUSTOMER")) continue;
+                        if(!custRaw) continue;
+
+                        await updateMasterData(custRaw, locRaw);
+                        count++;
+                    }
+
+                    document.getElementById('loadingOverlay').style.display = 'none';
+                    document.getElementById('loadingOverlay').innerText = "Connecting to Database...";
+                    alert(`Successfully uploaded ${count} customer records.`);
+                    fileInput.value = ""; // clear input
+                    
+                } catch (error) {
+                    console.error(error);
+                    document.getElementById('loadingOverlay').style.display = 'none';
+                    alert("Error processing file. Please check format.");
+                }
+            };
+
+            reader.readAsArrayBuffer(file);
+        }
+
+        async function deleteMaster(docId) {
+            if(!confirm("Delete this customer from master?")) return;
+            await MASTER_COLLECTION.doc(docId).delete();
+        }
+
+        function renderMasterTable() {
+            const tbody = document.querySelector('#masterTable tbody');
+            tbody.innerHTML = '';
+            
+            Object.keys(masterData).sort().forEach(cust => {
+                const tr = document.createElement('tr');
+                const locs = masterData[cust].map(l => `<span class="tag">${l}</span>`).join(" ");
+                
+                tr.innerHTML = `
+                    <td style="font-weight:bold;">${cust}</td>
+                    <td>${locs || '<span style="color:#999;font-size:0.7em;">No Loc</span>'}</td>
+                    <td><button onclick="deleteMaster('${cust}')" style="background:#dc3545; color:white; border:none; border-radius:3px; cursor:pointer;">Del</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+
         // --- Core Functions ---
+
+        function updateTableDisplay() {
+            const selectedDate = document.getElementById('viewDate').value;
+            if(!selectedDate) { renderTable([]); return; }
+
+            const filteredRecords = allRecords.filter(r => (r.entryDate || r.stuffingDate) === selectedDate);
+            
+            const formattedDate = formatDate(selectedDate);
+            document.getElementById('reportHeader').textContent = `HTPL Daily EXIM Movement Planning :: (${formattedDate})`;
+            document.getElementById('hiddenReportHeader').textContent = `HTPL Daily EXIM Movement Planning :: (${formattedDate})`;
+
+            renderTable(filteredRecords);
+            renderTable(filteredRecords, 'hiddenReportTable');
+        }
 
         function renderTable(records, targetTableId = 'reportTable') {
             const tbody = document.querySelector(`#${targetTableId} tbody`);
@@ -326,11 +614,7 @@
             tbody.innerHTML = '';
             tfoot.innerHTML = '';
             
-            // Sort: SalesPerson ASC, then StuffingDate ASC
-            records.sort((a, b) => {
-                if (a.salesPerson !== b.salesPerson) return a.salesPerson.localeCompare(b.salesPerson);
-                return a.stuffingDate.localeCompare(b.stuffingDate);
-            });
+            records.sort((a, b) => a.salesPerson.localeCompare(b.salesPerson));
             
             let total20 = 0, total40 = 0, totalDbl20 = 0;
             
@@ -362,12 +646,12 @@
                     const editBtn = document.createElement('button');
                     editBtn.textContent = 'Edit';
                     editBtn.classList.add('edit-btn');
-                    editBtn.onclick = () => editRecord(record.id); // Pass Doc ID
+                    editBtn.onclick = () => editRecord(record.id); 
                     
                     const deleteBtn = document.createElement('button');
                     deleteBtn.textContent = 'Delete';
                     deleteBtn.classList.add('delete-btn');
-                    deleteBtn.onclick = () => deleteRecord(record.id); // Pass Doc ID
+                    deleteBtn.onclick = () => deleteRecord(record.id); 
                     
                     actionCell.appendChild(editBtn);
                     actionCell.appendChild(deleteBtn);
@@ -376,24 +660,20 @@
                 }
             });
             
-            // Calculate TEUs
             const totalTEUs = total20 + (total40 * 2) + (totalDbl20 * 2);
 
             if (records.length > 0) {
                 const totalRow = tfoot.insertRow();
-                // Merge first 4 columns for "GRAND TOTAL" label
                 const totalColspan = 4;
                 const labelCell = totalRow.insertCell();
                 labelCell.colSpan = totalColspan;
                 labelCell.textContent = "GRAND TOTAL:";
                 labelCell.style.textAlign = 'right';
                 
-                // Value Cells
                 totalRow.insertCell().textContent = total20;
                 totalRow.insertCell().textContent = total40;
                 totalRow.insertCell().textContent = totalDbl20;
                 
-                // Merge Remaining Columns and show TEU
                 const remainingColspan = (targetTableId === 'reportTable') ? 4 : 3;
                 const teuCell = totalRow.insertCell();
                 teuCell.colSpan = remainingColspan;
@@ -402,31 +682,6 @@
                 teuCell.style.color = '#0f5132';
                 teuCell.textContent = `TOTAL TEUs: ${totalTEUs}`;
             }
-            
-            // Re-apply filter if search box has text
-            if(targetTableId === 'reportTable') filterTable();
-        }
-
-        function deriveSuggestions() {
-            // Extract unique Customers and Locations from DB records
-            const customers = [...new Set(allRecords.map(r => r.customerName))].sort();
-            const locations = [...new Set(allRecords.map(r => r.location).filter(l => l))].sort();
-
-            const custData = document.getElementById('customerSuggestions');
-            custData.innerHTML = '';
-            customers.forEach(c => {
-                const op = document.createElement('option');
-                op.value = c;
-                custData.appendChild(op);
-            });
-
-            const locData = document.getElementById('locationSuggestions');
-            locData.innerHTML = '';
-            locations.forEach(l => {
-                const op = document.createElement('option');
-                op.value = l;
-                locData.appendChild(op);
-            });
         }
 
         // --- CRUD Operations ---
@@ -434,25 +689,36 @@
         document.getElementById('salesEntryForm').addEventListener('submit', async function (event) {
             event.preventDefault();
             const form = event.target;
-            const editId = document.getElementById('editId').value; // Get ID
+            const editId = document.getElementById('editId').value; 
             
-            // Clear errors
             document.querySelectorAll('#salesEntryForm .highlight-error').forEach(el => el.classList.remove('highlight-error'));
+
+            // Capture Entry Date
+            const todayISO = new Date().toISOString().split('T')[0];
+            let entryDateToSave = todayISO;
+
+            if (editId) {
+                const oldRecord = allRecords.find(r => r.id === editId);
+                if (oldRecord && oldRecord.entryDate) entryDateToSave = oldRecord.entryDate;
+            }
+
+            const custName = form.customerName.value.trim().toUpperCase();
+            const locName = form.location.value.trim().toUpperCase();
 
             const formData = {
                 salesPerson: form.salesPerson.value,
-                customerName: form.customerName.value.trim().toUpperCase(),
-                location: form.location.value.trim().toUpperCase(),
+                customerName: custName,
+                location: locName,
                 container20: form.container20.value.trim(),
                 container40: form.container40.value.trim(),
                 containerDbl20: form.containerDbl20.value.trim(),
                 stuffingDate: form.stuffingDate.value,
                 priority: form.priority.value,
                 remarks: form.remarks.value.trim(),
-                timestamp: firebase.firestore.FieldValue.serverTimestamp() // Add server time
+                entryDate: entryDateToSave,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
             };
             
-            // Validation
             let formIsValid = true;
             const requiredFields = [form.salesPerson, form.customerName, form.stuffingDate];
             requiredFields.forEach(field => {
@@ -467,9 +733,6 @@
             const cDbl20 = parseInt(formData.containerDbl20) || 0;
             if (c20 + c40 + cDbl20 <= 0) {
                 alert("कृपया कम से कम एक कंटेनर संख्या (20\", 40\", या Double 20\") भरें।");
-                [form.container20, form.container40, form.containerDbl20].forEach(f => {
-                    if (parseInt(f.value) <= 0) f.classList.add('highlight-error');
-                });
                 formIsValid = false;
             }
             
@@ -481,10 +744,14 @@
             // Save to Firestore
             try {
                 if (editId) {
-                    await COLLECTION_PATH.doc(editId).update(formData);
+                    await SALES_COLLECTION.doc(editId).update(formData);
                 } else {
-                    await COLLECTION_PATH.add(formData);
+                    await SALES_COLLECTION.add(formData);
                 }
+                
+                // AUTO-LEARN MASTER DATA
+                await updateMasterData(custName, locName);
+
                 resetForm();
             } catch (e) {
                 console.error("Save error:", e);
@@ -506,16 +773,21 @@
             document.getElementById('priority').value = record.priority;
             document.getElementById('remarks').value = record.remarks || '';
             
-            document.getElementById('editId').value = docId; // Set Doc ID
+            document.getElementById('editId').value = docId; 
             document.getElementById('saveEntryBtn').textContent = "Update Entry";
             document.getElementById('saveEntryBtn').classList.add('editing');
+            
+            // Trigger input event to filter locations for this customer
+            const event = new Event('input');
+            document.getElementById('customerName').dispatchEvent(event);
+            
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         async function deleteRecord(docId) {
             if (!confirm(`Are you sure you want to delete this entry?`)) return;
             try {
-                await COLLECTION_PATH.doc(docId).delete();
+                await SALES_COLLECTION.doc(docId).delete();
                 resetForm();
             } catch (e) {
                 console.error(e);
@@ -525,11 +797,8 @@
 
         async function clearAllData() {
             if (!confirm("Are you sure you want to delete ALL entries? This cannot be undone.")) return;
-            
-            // Note: Client-side batch delete for small datasets. 
-            // For large datasets, this should be a cloud function, but works here.
             try {
-                const snapshot = await COLLECTION_PATH.get();
+                const snapshot = await SALES_COLLECTION.get();
                 const batch = db.batch();
                 snapshot.docs.forEach((doc) => {
                     batch.delete(doc.ref);
@@ -549,7 +818,7 @@
             document.getElementById('salesEntryForm').reset();
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('stuffingDate').value = today;
-            document.getElementById('editId').value = ""; // Clear ID
+            document.getElementById('editId').value = ""; 
             document.getElementById('saveEntryBtn').textContent = "Save Entry & Update Report";
             document.getElementById('saveEntryBtn').classList.remove('editing');
             document.querySelectorAll('#salesEntryForm .highlight-error').forEach(el => el.classList.remove('highlight-error'));
@@ -566,49 +835,21 @@
             dataOptions.forEach(option => select.appendChild(option));
         }
 
-        function filterTable() {
-            const input = document.getElementById('tableSearch');
-            const filter = input.value.toUpperCase();
-            const table = document.getElementById('reportTable');
-            const tr = table.getElementsByTagName('tr');
-
-            for (let i = 1; i < tr.length; i++) {
-                const tdSales = tr[i].getElementsByTagName('td')[1];
-                const tdCust = tr[i].getElementsByTagName('td')[2];
-                const tdLoc = tr[i].getElementsByTagName('td')[3];
-                
-                if (tdSales || tdCust || tdLoc) {
-                    const txtSales = tdSales.textContent || tdSales.innerText;
-                    const txtCust = tdCust.textContent || tdCust.innerText;
-                    const txtLoc = tdLoc.textContent || tdLoc.innerText;
-                    
-                    if (txtSales.toUpperCase().indexOf(filter) > -1 || 
-                        txtCust.toUpperCase().indexOf(filter) > -1 || 
-                        txtLoc.toUpperCase().indexOf(filter) > -1) {
-                        tr[i].style.display = "";
-                    } else {
-                        if(tr[i].parentNode.tagName !== 'TFOOT') tr[i].style.display = "none";
-                    }
-                }
-            }
-        }
-
         function downloadSalesData() {
-            if (allRecords.length === 0) {
-                alert("Download करने के लिए कोई डेटा उपलब्ध नहीं है।");
+            const selectedDate = document.getElementById('viewDate').value;
+            const recordsToDownload = allRecords.filter(r => (r.entryDate || r.stuffingDate) === selectedDate);
+            
+            if (recordsToDownload.length === 0) {
+                alert("Download करने के लिए इस तारीख (Selected Date) पर कोई डेटा उपलब्ध नहीं है।");
                 return;
             }
             
-            // Sort for download
-            const sorted = [...allRecords].sort((a, b) => {
-                if (a.salesPerson !== b.salesPerson) return a.salesPerson.localeCompare(b.salesPerson);
-                return a.stuffingDate.localeCompare(b.stuffingDate);
-            });
+            recordsToDownload.sort((a, b) => a.salesPerson.localeCompare(b.salesPerson));
             
             const headers = ["Sr No.", "Sales Person", "Customer Name", "Location", "20\"", "40\"", "Double 20\"", "Stuffing Date", "Priority", "Remarks"];
             let csvContent = headers.join(",") + "\n";
             
-            sorted.forEach((record, index) => {
+            recordsToDownload.forEach((record, index) => {
                 const row = [
                     index + 1,
                     record.salesPerson,
@@ -624,11 +865,10 @@
                 csvContent += row.map(e => `"${e}"`).join(",") + "\n";
             });
             
-            const today = new Date().toISOString().split('T')[0];
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
-            link.download = `Export_Planning_Report_${today}.csv`;
+            link.download = `Export_Planning_${selectedDate}.csv`;
             link.style.visibility = 'hidden';
             document.body.appendChild(link);
             link.click();
@@ -636,16 +876,17 @@
         }
 
         async function shareReportOnWhatsApp() {
-            if (allRecords.length === 0) {
-                alert("Share करने के लिए कोई डेटा नहीं है।");
+            const selectedDate = document.getElementById('viewDate').value;
+            const visibleRecords = allRecords.filter(r => (r.entryDate || r.stuffingDate) === selectedDate);
+
+            if (visibleRecords.length === 0) {
+                alert("Share करने के लिए इस तारीख (Selected Date) पर कोई डेटा नहीं है।");
                 return;
             }
-            // Ensure hidden table is up to date
-            renderTable(allRecords, 'hiddenReportTable');
+            renderTable(visibleRecords, 'hiddenReportTable');
             
             const wrapper = document.getElementById('hiddenReportTableWrapper');
-            const header = document.getElementById('hiddenReportHeader');
-            header.textContent = document.getElementById('reportHeader').textContent;
+            document.getElementById('hiddenReportHeader').textContent = document.getElementById('reportHeader').textContent;
             
             wrapper.style.left = '0';
             wrapper.style.position = 'relative';
@@ -656,7 +897,7 @@
                 const imageURL = canvas.toDataURL('image/png');
                 const link = document.createElement('a');
                 link.href = imageURL;
-                link.download = `Export_Report_${new Date().toISOString().split('T')[0]}.png`;
+                link.download = `Export_Report_${selectedDate}.png`;
                 link.style.display = 'none';
                 document.body.appendChild(link);
                 link.click();
