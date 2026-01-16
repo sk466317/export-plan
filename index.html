@@ -38,7 +38,7 @@
         #customerName, #location { text-transform: uppercase; }
         textarea { resize: vertical; min-height: 45px; }
         
-        /* CUSTOM SUGGESTION LIST STYLES (New) */
+        /* CUSTOM SUGGESTION LIST STYLES */
         .custom-suggestions {
             position: absolute;
             top: 100%;
@@ -110,7 +110,7 @@
         .report-container { margin-top: 20px; padding: 12px; border: 4px solid #007BFF; border-radius: 8px; background-color: #51f1ff; }
         .report-container h2 { color: #333; margin-bottom: 10px; text-align: center; font-weight: bold; font-size: 1.2rem; }
         
-        /* DATE FILTER STYLING (New) */
+        /* DATE FILTER STYLING */
         .date-filter-container {
             background-color: #e3f2fd;
             padding: 10px;
@@ -179,14 +179,65 @@
         
         .highlight-error { border: 2px solid red !important; background-color: #ffe5e5 !important; box-shadow: 0 0 5px rgba(255, 0, 0, 0.5) !important; }
         
-        /* Hidden table for capture */
-        #hiddenReportTableWrapper { position: absolute; left: -9999px; top: 0; width: auto; padding: 15px; background-color: #6fa8dc; font-family: Arial, sans-serif; color: #333; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); border-radius: 8px; }
-        #hiddenReportTableWrapper h2 { text-align: center; margin-bottom: 12px; color: #333; font-weight: bold; }
-        #hiddenReportTable { width: 100%; border-collapse: collapse; font-size: 0.75rem; background-color: white; table-layout: auto; }
-        #hiddenReportTable th, #hiddenReportTable td { border: 1px solid #0c343d; padding: 4px 6px; text-align: left; white-space: normal; word-wrap: break-word; font-weight: bold; vertical-align: middle; }
-        #hiddenReportTable th { background-color: #333333; color: white; font-size: 0.72rem; }
+        /* Hidden table for capture - UPDATED FOR PROFESSIONAL LOOK */
+        #hiddenReportTableWrapper { 
+            position: absolute; 
+            left: -9999px; 
+            top: 0; 
+            width: auto; 
+            min-width: 900px; /* Slightly wider to accommodate new column */
+            padding: 30px; /* Increased padding */
+            background-color: #ffffff; /* White base */
+            font-family: 'Segoe UI', Arial, sans-serif; 
+            color: #333; 
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); 
+            border-radius: 0; /* A4 style sharp corners */
+            border: 1px solid #ccc;
+        }
+        
+        /* New Header Layout for Photo & Main Display */
+        .photo-header, .main-report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+            border-bottom: 3px solid #007bff;
+            padding-bottom: 15px;
+            gap: 20px;
+        }
+        
+        .photo-title-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .photo-totals-section {
+            /* Now holds the mini summary table */
+            min-width: 350px; /* Increased width for extra column */
+        }
+        
+        /* Mini Summary Table Styles */
+        .summary-table { width: 100%; border-collapse: collapse; font-size: 11px; background-color: #fff; }
+        .summary-table th { background-color: #333; color: white; padding: 4px; text-align: center; border: 1px solid #999; }
+        .summary-table td { border: 1px solid #ccc; padding: 4px; text-align: center; color: #333; }
+        .summary-table td:first-child { text-align: left; font-weight: bold; }
+        
+        /* Grand Total Row Style in Summary Table */
+        .summary-total-row td { 
+            background-color: #d1e7dd; 
+            color: #0f5132; 
+            font-weight: bold; 
+            border: 1px solid #badbcc;
+            font-size: 12px;
+        }
+
+        #hiddenReportTable { width: 100%; border-collapse: collapse; font-size: 13px; background-color: white; table-layout: auto; }
+        #hiddenReportTable th, #hiddenReportTable td { border: 1px solid #333; padding: 6px 8px; text-align: left; white-space: normal; word-wrap: break-word; font-weight: bold; vertical-align: middle; }
+        #hiddenReportTable th { background-color: #333333; color: white; font-size: 13px; text-transform: uppercase; }
         #hiddenReportTable .high-priority { background-color: #b5ff0d !important; }
-        #hiddenReportTable tfoot td { font-weight: bold; background-color: #d5a6bd; border-top: 2px solid #333; }
+        #hiddenReportTable tfoot td { font-weight: bold; background-color: #eee; border-top: 2px solid #333; }
         #hiddenReportTable .action-col { display: none !important; }
 
         /* Loading Overlay */
@@ -320,7 +371,9 @@
                     </div>
                     <div class="button-group">
                         <button type="submit" id="saveEntryBtn">Save Entry & Update Report</button>
-                        <button type="button" id="downloadCsvBtn" onclick="downloadSalesData()">Download Report (CSV)</button>
+                        <button type="button" id="downloadExcelBtn" onclick="downloadSalesDataAsExcel()" style="background-color: #f1c232; color: white; border: none; padding: 8px 15px; border-radius: 5px; font-weight: bold; cursor: pointer;">
+                            Download Report (Formatted Excel)
+                        </button>
                         <button type="button" id="shareReportBtn" onclick="shareReportOnWhatsApp()">Share Report (Photo)</button>
                         <button type="button" id="emailBtn" onclick="emailReport()">Email Report (Outlook)</button>
                         <button type="button" id="clearAllBtn" onclick="clearAllData()">Delete All Data</button>
@@ -330,11 +383,26 @@
             </div>
             
             <div class="report-container">
-                <h2 id="reportHeader">HTPL Daily EXIM Movement Planning </h2>
+                <!-- UPDATED MAIN REPORT HEADER -->
+                <div class="main-report-header">
+                    <!-- Left Side: Title & Date -->
+                    <div class="photo-title-section">
+                        <div style="font-size: 1.4rem; font-weight: bold; text-align: left; margin-bottom: 8px;">
+                            HTPL Daily EXIM Movement Planning - <span id="reportDateHeader"></span>
+                        </div>
+                    </div>
+                    
+                    <!-- Right Side: Summary Table -->
+                    <div class="photo-totals-section" id="displaySummarySection">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <h2 id="reportHeader" style="display:none;">HTPL Daily EXIM Movement Planning </h2>
                 
                 <!-- DATE FILTER Linked to Entry Date -->
                 <div class="date-filter-container">
-                    <label for="viewDate">📅 SELECT ENTRY DATE TO VIEW REPORT:</label>
+                    <label for="viewDate">📅 See Old Dated Plannings ->:</label>
                     <input type="date" id="viewDate" onchange="updateTableDisplay()">
                 </div>
                 
@@ -363,8 +431,25 @@
         </div>
     </div>
 
+    <!-- HIDDEN REPORT WRAPPER FOR PHOTO -->
     <div id="hiddenReportTableWrapper">
-        <h2 id="hiddenReportHeader">HTPL Daily EXIM Movement Planning </h2>
+        <div class="photo-header">
+            <!-- Left Side: Title & Date -->
+            <div class="photo-title-section">
+                <div style="font-size: 24px; font-weight: bold; color: #007bff; margin-bottom: 8px;">
+                    HTPL Daily EXIM Movement Planning
+                </div>
+                <div id="hiddenReportDateHeader" style="font-size: 18px; font-weight: 600; color: #333;">
+                    <!-- Date will be populated here -->
+                </div>
+            </div>
+
+            <!-- Right Side: Sales Person Summary Table -->
+            <div class="photo-totals-section" id="photoSummarySection">
+                <!-- Summary Table Injected via JS -->
+            </div>
+        </div>
+
         <table id="hiddenReportTable">
             <thead>
                 <tr>
@@ -378,9 +463,9 @@
                     <th>Stuffing Date</th>
                     <th>Priority</th>
                     <th>Remarks</th>
-                    <th class="action-col">Actions</th>
                 </tr>
             </thead>
+            <!-- tbody, tfoot populated by JS -->
             <tbody></tbody>
             <tfoot></tfoot>
         </table>
@@ -412,61 +497,92 @@
         let allRecords = [];
         let masterData = {}; // Format: { "CUSTOMER_NAME": { locations: ["LOC1"], salesPerson: "Name" } }
 
-        // ==========================================
-        //  APP LOGIC
-        // ==========================================
+        // ──────────────────────────────────────────────
+        // UTILITY FUNCTIONS – Date Formatting
+        // ──────────────────────────────────────────────
 
-        function formatDate(dateString) {
-            if (!dateString) return '';
-            const [yyyy, mm, dd] = dateString.split('-');
+        // MISSING FUNCTION FIX: Returns "DD-MM-YYYY" string for today
+        function getTodayDateFormatted() {
+            const today = new Date();
+            const dd = String(today.getDate()).padStart(2, '0');
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const yyyy = today.getFullYear();
             return `${dd}-${mm}-${yyyy}`;
         }
-        
-        function getTodayDateFormatted() {
-            return new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+
+        // For web display & photo (with HTML line break and HIGHLIGHT)
+        function formatDateForDisplay(dateString) {
+            if (!dateString) return '-';
+            const dateObj = new Date(dateString);
+            if (isNaN(dateObj.getTime())) return dateString;
+
+            const dd = String(dateObj.getDate()).padStart(2, '0');
+            const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const yyyy = dateObj.getFullYear();
+            const dayName = dateObj.toLocaleString('en-US', { weekday: 'long' });
+
+            // Highlight day name with yellow background
+            return `${dd}-${mm}-${yyyy}<br><span style="background-color: #ffff00; color: black; font-weight: bold; padding: 1px 4px; border-radius: 3px; font-size: 0.9em;">${dayName}</span>`;
         }
-        
-        // --- Initialization ---
+
+        // For Excel / CSV / plain text (no HTML tags)
+        function formatDateForExcel(dateString) {
+            if (!dateString) return '';
+            const dateObj = new Date(dateString);
+            if (isNaN(dateObj.getTime())) return dateString;
+
+            const dd = String(dateObj.getDate()).padStart(2, '0');
+            const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const yyyy = dateObj.getFullYear();
+            const dayName = dateObj.toLocaleString('en-US', { weekday: 'long' });
+
+            return `${dd}-${mm}-${yyyy} (${dayName})`;
+        }
+
+        // Fix for emailReport missing function (alias to Excel formatter)
+        function formatDate(dateString) {
+            return formatDateForExcel(dateString);
+        }
+
+        // ==========================================
+        // MAIN INITIALIZATION - ONLY ONE LISTENER
+        // ==========================================
+
         document.addEventListener('DOMContentLoaded', async () => {
             const todayISO = new Date().toISOString().split('T')[0];
             const todayFormatted = getTodayDateFormatted();
+
+            // Set header and default dates
+            document.getElementById('entryHeader').textContent = 
+                `Daily Export Planning (${todayFormatted})`;
             
-            // Set Default Dates
-            document.getElementById('entryHeader').textContent = `Daily Export Planning (${todayFormatted})`;
             document.getElementById('stuffingDate').value = todayISO;
             document.getElementById('viewDate').value = todayISO;
-            
+
             sortSalesPersonOptions();
 
-            // Login Anonymously & Listen for Data
             try {
+                // Authentication
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     await auth.signInWithCustomToken(__initial_auth_token);
                 } else {
                     await auth.signInAnonymously();
                 }
 
-                // 1. Listen to Sales Records
+                // Listen to collections
                 SALES_COLLECTION.onSnapshot((snapshot) => {
                     allRecords = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     updateTableDisplay();
                     document.getElementById('loadingOverlay').style.display = 'none';
                 });
-
-                // 2. Listen to Master Data (With Sales Person)
+                
                 MASTER_COLLECTION.onSnapshot((snapshot) => {
                     masterData = {};
                     snapshot.docs.forEach(doc => {
-                        const data = doc.data();
-                        masterData[doc.id] = {
-                            locations: data.locations || [],
-                            salesPerson: data.salesPerson || ""
-                        };
+                        masterData[doc.id] = doc.data();
                     });
-                    // Removed updateCustomerDatalist() as we use custom list now
                     renderMasterTable();
                 });
-
             } catch (err) {
                 console.error("Auth Error:", err);
                 alert("Failed to connect to database.");
@@ -742,28 +858,129 @@
 
 
         // --- Core Functions ---
-
         function updateTableDisplay() {
             const selectedDate = document.getElementById('viewDate').value;
-            if(!selectedDate) { renderTable([]); return; }
+            if (!selectedDate) {
+                renderTable([]);
+                return;
+            }
 
-            const filteredRecords = allRecords.filter(r => (r.entryDate || r.stuffingDate) === selectedDate);
+            const filteredRecords = allRecords.filter(r => 
+                (r.entryDate || r.stuffingDate) === selectedDate
+            );
+
+            // Calculate Totals for Main View
+            let total20 = 0, total40 = 0, totalDbl = 0;
             
-            const formattedDate = formatDate(selectedDate);
-            document.getElementById('reportHeader').textContent = `HTPL Daily EXIM Movement Planning :: (${formattedDate})`;
-            document.getElementById('hiddenReportHeader').textContent = `HTPL Daily EXIM Movement Planning :: (${formattedDate})`;
+            // --- NEW: Calculate Sales Person Summary Data ---
+            const summaryMap = {}; // { "Name": { c20: 0, c40: 0, cDbl: 0 } }
 
-            renderTable(filteredRecords);
-            renderTable(filteredRecords, 'hiddenReportTable');
-        }
+            filteredRecords.forEach(r => {
+                const c20 = parseInt(r.container20) || 0;
+                const c40 = parseInt(r.container40) || 0;
+                const cDbl = parseInt(r.containerDbl20) || 0;
+                
+                // Grand Totals
+                total20 += c20;
+                total40 += c40;
+                totalDbl += cDbl;
+                
+                // Per Sales Person
+                const sp = r.salesPerson || "Unknown";
+                if (!summaryMap[sp]) summaryMap[sp] = { c20: 0, c40: 0, cDbl: 0 };
+                summaryMap[sp].c20 += c20;
+                summaryMap[sp].c40 += c40;
+                summaryMap[sp].cDbl += cDbl;
+            });
+            const totalTEUs = total20 + (total40 * 2) + (totalDbl * 2);
+
+            // Date formatting
+            const dateObj = new Date(selectedDate);
+            const dayName = dateObj.toLocaleString('en-US', { weekday: 'long' });
+            const formattedDate = `${String(dateObj.getDate()).padStart(2, '0')}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${dateObj.getFullYear()}`;
+            const dateDisplay = `${formattedDate}<br><span style="color:#1a1a1a; font-weight:600; font-size:0.9em;">(${dayName})</span>`;
+
+            // Update Main Page Header
+            document.getElementById('reportDateHeader').innerHTML = dateDisplay;
+            
+            // Update Hidden Wrapper Header (Photo)
+            document.getElementById('hiddenReportDateHeader').innerHTML = dateDisplay;
+            
+            // --- GENERATE MINI SUMMARY TABLE (For Both Display & Photo) ---
+            let summaryHTML = `
+                <table class="summary-table">
+                    <tr>
+                        <th>Sales Person</th>
+                        <th>20"</th>
+                        <th>40"</th>
+                        <th>Dbl 20"</th>
+                        <th>TEUs</th>
+                    </tr>
+            `;
+            
+            // Sort Sales Persons
+            Object.keys(summaryMap).sort().forEach(sp => {
+                const d = summaryMap[sp];
+                const teu = d.c20 + (d.c40 * 2) + (d.cDbl * 2);
+                summaryHTML += `
+                    <tr>
+                        <td>${sp}</td>
+                        <td>${d.c20 || '-'}</td>
+                        <td>${d.c40 || '-'}</td>
+                        <td>${d.cDbl || '-'}</td>
+                        <td>${teu}</td>
+                    </tr>
+                `;
+            });
+
+            // Footer Row (Grand Total - Styled Green)
+            summaryHTML += `
+                <tr class="summary-total-row">
+                    <td>Total ::</td>
+                    <td>${total20}</td>
+                    <td>${total40}</td>
+                    <td>${totalDbl}</td>
+                    <td>${totalTEUs}</td>
+                </tr>
+            </table>`;
+            
+            // Inject into Photo Section
+            document.getElementById('photoSummarySection').innerHTML = summaryHTML;
+            // Inject into Main Display Section
+            document.getElementById('displaySummarySection').innerHTML = summaryHTML;
+
+
+            // Render both tables
+            renderTable(filteredRecords);                     
+            renderTable(filteredRecords, 'hiddenReportTable'); 
+        }      
 
         function renderTable(records, targetTableId = 'reportTable') {
-            const tbody = document.querySelector(`#${targetTableId} tbody`);
-            const tfoot = document.querySelector(`#${targetTableId} tfoot`);
+            const table = document.getElementById(targetTableId);
+            if (!table) {
+                console.warn(`Table with ID ${targetTableId} not found`);
+                return;
+            }
+            
+            const tbody = table.querySelector('tbody');
+            const tfoot = table.querySelector('tfoot');
+            
+            if (!tbody || !tfoot) {
+                console.warn(`tbody/tfoot not found in ${targetTableId}`);
+                return;
+            }
+            
             tbody.innerHTML = '';
             tfoot.innerHTML = '';
             
-            records.sort((a, b) => a.salesPerson.localeCompare(b.salesPerson));
+            records.sort((a, b) => {
+                // 1. Sort by stuffingDate first
+                if (a.stuffingDate !== b.stuffingDate) {
+                    return a.stuffingDate.localeCompare(b.stuffingDate);
+                }
+                // 2. Sort by Sales Person
+                return a.salesPerson.localeCompare(b.salesPerson);
+            });
             
             let total20 = 0, total40 = 0, totalDbl20 = 0;
             
@@ -784,7 +1001,8 @@
                 row.insertCell().textContent = c20 > 0 ? c20 : '';
                 row.insertCell().textContent = c40 > 0 ? c40 : '';
                 row.insertCell().textContent = cDbl20 > 0 ? cDbl20 : '';
-                row.insertCell().textContent = formatDate(record.stuffingDate);
+                const dateCell = row.insertCell();
+                dateCell.innerHTML = formatDateForDisplay(record.stuffingDate);
                 row.insertCell().textContent = record.priority;
                 row.insertCell().textContent = record.remarks || '-';
                 
@@ -805,7 +1023,8 @@
                     actionCell.appendChild(editBtn);
                     actionCell.appendChild(deleteBtn);
                 } else {
-                    row.insertCell().classList.add('action-col');
+                    const ac = row.insertCell();
+                    ac.classList.add('action-col');
                 }
             });
             
@@ -985,45 +1204,130 @@
             dataOptions.forEach(option => select.appendChild(option));
         }
 
-        function downloadSalesData() {
-            const selectedDate = document.getElementById('viewDate').value;
-            const recordsToDownload = allRecords.filter(r => (r.entryDate || r.stuffingDate) === selectedDate);
-            
-            if (recordsToDownload.length === 0) {
-                alert("Download करने के लिए इस तारीख (Selected Date) पर कोई डेटा उपलब्ध नहीं है।");
-                return;
-            }
-            
-            recordsToDownload.sort((a, b) => a.salesPerson.localeCompare(b.salesPerson));
-            
-            const headers = ["Sr No.", "Sales Person", "Customer Name", "Location", "20\"", "40\"", "Double 20\"", "Stuffing Date", "Priority", "Remarks"];
-            let csvContent = headers.join(",") + "\n";
-            
-            recordsToDownload.forEach((record, index) => {
-                const row = [
-                    index + 1,
-                    record.salesPerson,
-                    record.customerName.replace(/"/g, '""'),
-                    record.location.replace(/"/g, '""') || '-',
-                    record.container20 || 0,
-                    record.container40 || 0,
-                    record.containerDbl20 || 0,
-                    formatDate(record.stuffingDate),
-                    record.priority,
-                    record.remarks.replace(/"/g, '""') || '-'
-                ];
-                csvContent += row.map(e => `"${e}"`).join(",") + "\n";
-            });
-            
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = `Export_Planning_${selectedDate}.csv`;
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+      function downloadSalesDataAsExcel() {
+    const selectedDate = document.getElementById('viewDate').value;
+    const records = allRecords.filter(r => (r.entryDate || r.stuffingDate) === selectedDate);
+    
+    if (records.length === 0) {
+        alert("इस तारीख पर कोई डेटा उपलब्ध नहीं है।");
+        return;
+    }
+
+    // सॉर्टिंग
+    records.sort((a, b) => {
+        if (a.stuffingDate !== b.stuffingDate) return a.stuffingDate.localeCompare(b.stuffingDate);
+        return a.salesPerson.localeCompare(b.salesPerson);
+    });
+
+    // प्लेन टेक्स्ट डेट
+    function getPlainDate(dateStr) {
+        if (!dateStr) return '';
+        const d = new Date(dateStr);
+        const dd = String(d.getDate()).padStart(2, '0');
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const yyyy = d.getFullYear();
+        const dayName = d.toLocaleString('en-US', { weekday: 'long' });
+        return `${dd}-${mm}-${yyyy} (${dayName})`;
+    }
+
+    // डेटा
+    const data = records.map((r, i) => ({
+        "Sr No.": i + 1,
+        "Sales Person": r.salesPerson,
+        "Customer Name": r.customerName,
+        "Location": r.location || '-',
+        "20\"": r.container20 || '',
+        "40\"": r.container40 || '',
+        "Double 20\"": r.containerDbl20 || '',
+        "Stuffing Date": getPlainDate(r.stuffingDate),
+        "Priority": r.priority,
+        "Remarks": r.remarks || '-'
+    }));
+
+    // ग्रैंड टोटल
+    let total20 = 0, total40 = 0, totalDbl = 0;
+    records.forEach(r => {
+        total20 += parseInt(r.container20) || 0;
+        total40 += parseInt(r.container40) || 0;
+        totalDbl += parseInt(r.containerDbl20) || 0;
+    });
+    const totalTEUs = total20 + (total40 * 2) + (totalDbl * 2);
+
+    data.push({
+        "Sr No.": "GRAND TOTAL:",
+        "Sales Person": "",
+        "Customer Name": "",
+        "Location": "",
+        "20\"": total20,
+        "40\"": total40,
+        "Double 20\"": totalDbl,
+        "Stuffing Date": `TOTAL TEUs: ${totalTEUs}`,
+        "Priority": "",
+        "Remarks": ""
+    });
+
+    // वर्कशीट
+    const ws = XLSX.utils.json_to_sheet(data);
+
+    // कॉलम विड्थ
+    ws['!cols'] = [
+        { wch: 8 }, { wch: 18 }, { wch: 30 }, { wch: 15 },
+        { wch: 8 }, { wch: 8 }, { wch: 12 }, { wch: 22 },
+        { wch: 10 }, { wch: 25 }
+    ];
+
+    // सभी सेल्स में बॉर्डर (डिफ़ॉल्ट Excel स्टाइल)
+    const range = XLSX.utils.decode_range(ws['!ref']);
+    for (let R = range.s.r; R <= range.e.r; ++R) {
+        for (let C = range.s.c; C <= range.e.c; ++C) {
+            const cell = XLSX.utils.encode_cell({ r: R, c: C });
+            if (!ws[cell]) continue;
+            ws[cell].s = ws[cell].s || {};
+            ws[cell].s.border = {
+                top: { style: "thin", color: { rgb: "000000" } },
+                bottom: { style: "thin", color: { rgb: "000000" } },
+                left: { style: "thin", color: { rgb: "000000" } },
+                right: { style: "thin", color: { rgb: "000000" } }
+            };
         }
+    }
+
+    // हेडर रो (पहली रो)
+    for (let C = 0; C < 10; ++C) {
+        const cell = XLSX.utils.encode_cell({ r: 0, c: C });
+        if (ws[cell]) {
+            ws[cell].s.font = { bold: true, color: { rgb: "FFFFFF" } };
+            ws[cell].s.fill = { fgColor: { rgb: "333333" } };
+            ws[cell].s.alignment = { horizontal: "center", vertical: "center" };
+        }
+    }
+
+    // ग्रैंड टोटल रो (आखिरी रो)
+    const lastRow = data.length; // हेडर + डेटा + 1
+    for (let C = 0; C < 10; ++C) {
+        const cell = XLSX.utils.encode_cell({ r: lastRow, c: C });
+        if (ws[cell]) {
+            if (C === 0) {
+                ws[cell].s.font = { bold: true };
+                ws[cell].s.fill = { fgColor: { rgb: "E0E0E0" } };
+                ws[cell].s.alignment = { horizontal: "right" };
+            } else if (C >= 4 && C <= 6) {
+                ws[cell].s.font = { bold: true };
+                ws[cell].s.fill = { fgColor: { rgb: "E0E0E0" } };
+                ws[cell].s.alignment = { horizontal: "center" };
+            } else if (C === 7) {
+                ws[cell].s.font = { bold: true, color: { rgb: "0F5132" } };
+                ws[cell].s.fill = { fgColor: { rgb: "D1E7DD" } };
+                ws[cell].s.alignment = { horizontal: "center" };
+            }
+        }
+    }
+
+    // Excel फाइल डाउनलोड
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Export Planning");
+    XLSX.writeFile(wb, `Export_Planning_${selectedDate}.xlsx`);
+}
 
         // --- NEW: EMAIL REPORT (OUTLOOK COPY) ---
         async function emailReport() {
@@ -1038,28 +1342,103 @@
             visibleRecords.sort((a, b) => a.salesPerson.localeCompare(b.salesPerson));
 
             let t20=0, t40=0, tDbl=0;
-            
-            // Build Outlook Table
-            let html = `
-                <table border="1" style="border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; font-size: 12px; border: 1px solid black;">
+            // Sales Person Summary Data
+            const summaryMap = {};
+
+            visibleRecords.forEach((r) => {
+                const c20 = parseInt(r.container20)||0;
+                const c40 = parseInt(r.container40)||0;
+                const cDbl = parseInt(r.containerDbl20)||0;
+                t20+=c20; t40+=c40; tDbl+=cDbl;
+                
+                const sp = r.salesPerson || "Unknown";
+                if (!summaryMap[sp]) summaryMap[sp] = { c20: 0, c40: 0, cDbl: 0 };
+                summaryMap[sp].c20 += c20;
+                summaryMap[sp].c40 += c40;
+                summaryMap[sp].cDbl += cDbl;
+            });
+            const totalTEU = t20 + (t40*2) + (tDbl*2);
+
+            // Construct Summary Table for Email
+            let summaryTableHTML = `
+                <table border="1" cellpadding="4" cellspacing="0" style="border-collapse: collapse; font-family: Arial, sans-serif; font-size: 11px; background-color: #fff; width: 100%;">
                     <tr style="background-color: #333; color: white;">
-                        <th style="padding:5px; border:1px solid black;">Sr No.</th>
-                        <th style="padding:5px; border:1px solid black;">Sales Person</th>
-                        <th style="padding:5px; border:1px solid black;">Customer Name</th>
-                        <th style="padding:5px; border:1px solid black;">Location</th>
-                        <th style="padding:5px; border:1px solid black;">20"</th>
-                        <th style="padding:5px; border:1px solid black;">40"</th>
-                        <th style="padding:5px; border:1px solid black;">Double 20"</th>
-                        <th style="padding:5px; border:1px solid black;">Stuffing Date</th>
-                        <th style="padding:5px; border:1px solid black;">Priority</th>
-                        <th style="padding:5px; border:1px solid black;">Remarks</th>
-                    </tr>`;
+                        <th style="padding: 4px; border: 1px solid #999;">Sales Person</th>
+                        <th style="padding: 4px; border: 1px solid #999;">20"</th>
+                        <th style="padding: 4px; border: 1px solid #999;">40"</th>
+                        <th style="padding: 4px; border: 1px solid #999;">Dbl 20"</th>
+                        <th style="padding: 4px; border: 1px solid #999;">TEUs</th>
+                    </tr>
+            `;
+            Object.keys(summaryMap).sort().forEach(sp => {
+                const d = summaryMap[sp];
+                const teu = d.c20 + (d.c40 * 2) + (d.cDbl * 2);
+                summaryTableHTML += `
+                    <tr>
+                        <td style="border: 1px solid #ccc; padding: 4px;">${sp}</td>
+                        <td style="border: 1px solid #ccc; padding: 4px; text-align: center;">${d.c20 || '-'}</td>
+                        <td style="border: 1px solid #ccc; padding: 4px; text-align: center;">${d.c40 || '-'}</td>
+                        <td style="border: 1px solid #ccc; padding: 4px; text-align: center;">${d.cDbl || '-'}</td>
+                        <td style="border: 1px solid #ccc; padding: 4px; text-align: center;">${teu}</td>
+                    </tr>
+                `;
+            });
+            summaryTableHTML += `
+                <tr style="background-color: #d1e7dd; color: #0f5132; font-weight: bold;">
+                    <td style="border: 1px solid #badbcc; padding: 4px;">Total ::</td>
+                    <td style="border: 1px solid #badbcc; padding: 4px; text-align: center;">${t20}</td>
+                    <td style="border: 1px solid #badbcc; padding: 4px; text-align: center;">${t40}</td>
+                    <td style="border: 1px solid #badbcc; padding: 4px; text-align: center;">${tDbl}</td>
+                    <td style="border: 1px solid #badbcc; padding: 4px; text-align: center;">${totalTEU}</td>
+                </tr>
+            </table>`;
+
+            // Date String for Title
+            const dateObj = new Date(selectedDate);
+            const dayName = dateObj.toLocaleString('en-US', { weekday: 'long' });
+            const dateStr = `${String(dateObj.getDate()).padStart(2, '0')}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${dateObj.getFullYear()}`;
+
+            
+            // Build Outlook Table (Layout using Tables for Email Client Compatibility)
+            let html = `
+                <div style="font-family: Arial, sans-serif;">
+                    <!-- HEADER SECTION TABLE -->
+                    <table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin-bottom: 20px; border-bottom: 3px solid #007bff; padding-bottom: 10px;">
+                        <tr>
+                            <td valign="top" style="padding-right: 20px;">
+                                <div style="font-size: 18px; font-weight: bold; color: #007bff; margin-bottom: 5px;">
+                                    HTPL Daily EXIM Movement Planning
+                                </div>
+                                <div style="font-size: 16px; font-weight: 600; color: #333;">
+                                    ${dateStr}<br>
+                                    <span style="background-color: #ffff00; color: black; font-weight: bold; padding: 1px 4px; border-radius: 3px; font-size: 0.9em;">(${dayName})</span>
+                                </div>
+                            </td>
+                            <td valign="top" width="350">
+                                ${summaryTableHTML}
+                            </td>
+                        </tr>
+                    </table>
+
+                    <!-- MAIN DATA TABLE -->
+                    <table border="1" style="border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; font-size: 12px; border: 1px solid black;">
+                        <tr style="background-color: #333; color: white;">
+                            <th style="padding:5px; border:1px solid black;">Sr No.</th>
+                            <th style="padding:5px; border:1px solid black;">Sales Person</th>
+                            <th style="padding:5px; border:1px solid black;">Customer Name</th>
+                            <th style="padding:5px; border:1px solid black;">Location</th>
+                            <th style="padding:5px; border:1px solid black;">20"</th>
+                            <th style="padding:5px; border:1px solid black;">40"</th>
+                            <th style="padding:5px; border:1px solid black;">Double 20"</th>
+                            <th style="padding:5px; border:1px solid black;">Stuffing Date</th>
+                            <th style="padding:5px; border:1px solid black;">Priority</th>
+                            <th style="padding:5px; border:1px solid black;">Remarks</th>
+                        </tr>`;
             
             visibleRecords.forEach((r, i) => {
                 const c20 = parseInt(r.container20)||0;
                 const c40 = parseInt(r.container40)||0;
                 const cDbl = parseInt(r.containerDbl20)||0;
-                t20+=c20; t40+=c40; tDbl+=cDbl;
                 
                 const bg = r.priority === 'High' ? '#b5ff0d' : '#ffffff';
                 
@@ -1077,8 +1456,6 @@
                 </tr>`;
             });
 
-            const totalTEU = t20 + (t40*2) + (tDbl*2);
-
             html += `<tr style="background-color: #e0e0e0; font-weight: bold; color: black;">
                 <td colspan="4" style="text-align:right; padding:5px; border:1px solid black;">GRAND TOTAL:</td>
                 <td style="text-align:center; padding:5px; border:1px solid black;">${t20}</td>
@@ -1090,7 +1467,8 @@
                 Thanks and Regards,<br>
                 <strong>Hind Terminals</strong><br>
                 Customer Service Team
-            </p>`;
+            </p>
+            </div>`;
 
             // COPY TO CLIPBOARD
             try {
@@ -1116,43 +1494,56 @@
             }
         }
 
-        async function shareReportOnWhatsApp() {
-            const selectedDate = document.getElementById('viewDate').value;
-            const visibleRecords = allRecords.filter(r => (r.entryDate || r.stuffingDate) === selectedDate);
+       async function shareReportOnWhatsApp() {
+    const selectedDate = document.getElementById('viewDate').value;
+    const visibleRecords = allRecords.filter(r => (r.entryDate || r.stuffingDate) === selectedDate);
+    
+    if (visibleRecords.length === 0) {
+        alert("Share करने के लिए इस तारीख पर कोई डेटा नहीं है।");
+        return;
+    }
 
-            if (visibleRecords.length === 0) {
-                alert("Share करने के लिए इस तारीख (Selected Date) पर कोई डेटा नहीं है।");
-                return;
-            }
-            renderTable(visibleRecords, 'hiddenReportTable');
-            
-            const wrapper = document.getElementById('hiddenReportTableWrapper');
-            document.getElementById('hiddenReportHeader').textContent = document.getElementById('reportHeader').textContent;
-            
-            wrapper.style.left = '0';
-            wrapper.style.position = 'relative';
-            wrapper.style.width = wrapper.scrollWidth + 'px';
-            
-            try {
-                const canvas = await html2canvas(wrapper, { scale: 2, useCORS: true, backgroundColor: '#E6F7FF' });
-                const imageURL = canvas.toDataURL('image/png');
-                const link = document.createElement('a');
-                link.href = imageURL;
-                link.download = `Export_Report_${selectedDate}.png`;
-                link.style.display = 'none';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                alert("✅ रिपोर्ट की फोटो डाउनलोड हो गई है। WhatsApp पर मैन्युअल शेयर करें।");
-            } catch (err) {
-                console.error(err);
-                alert("फोटो बनाने में समस्या आई।");
-            } finally {
-                wrapper.style.position = 'absolute';
-                wrapper.style.left = '-9999px';
-                wrapper.style.width = 'auto';
-            }
-        }
+    // पहले पूरी तरह रेंडर कर लें
+    renderTable(visibleRecords);
+    renderTable(visibleRecords, 'hiddenReportTable');
+
+    // DOM अपडेट होने के लिए छोटा सा इंतजार (बहुत महत्वपूर्ण)
+    await new Promise(resolve => setTimeout(resolve, 800));
+
+    const wrapper = document.getElementById('hiddenReportTableWrapper');
+    
+    wrapper.style.position = 'absolute';
+    wrapper.style.left = '0';
+    wrapper.style.top = '0';
+    wrapper.style.width = wrapper.scrollWidth + 'px';
+    wrapper.style.backgroundColor = '#ffffff'; // Ensure white background
+
+    try {
+        const canvas = await html2canvas(wrapper, {
+            scale: 2,
+            useCORS: true,
+            backgroundColor: '#ffffff',
+            logging: false,
+            windowWidth: wrapper.scrollWidth + 40,
+            windowHeight: wrapper.scrollHeight + 40
+        });
+
+        const imageURL = canvas.toDataURL('image/png');
+        
+        const link = document.createElement('a');
+        link.href = imageURL;
+        link.download = `Export_Report_${selectedDate}.png`;
+        link.click();
+        
+        alert("रिपोर्ट की फोटो सफलतापूर्वक डाउनलोड हो गई है।\nWhatsApp पर शेयर करें।");
+    } catch (err) {
+        console.error("Photo capture error:", err);
+        alert("फोटो बनाने में समस्या आई। कृपया पेज रिफ्रेश कर दोबारा प्रयास करें।");
+    } finally {
+        wrapper.style.left = '-9999px';
+        wrapper.style.width = 'auto';
+    }
+}
     </script>
 </body>
 </html>
