@@ -185,7 +185,7 @@
             left: -9999px; 
             top: 0; 
             width: auto; 
-            min-width: 900px; /* Slightly wider to accommodate new column */
+            min-width: 1050px; /* Wider to accommodate both tables */
             padding: 30px; /* Increased padding */
             background-color: #ffffff; /* White base */
             font-family: 'Segoe UI', Arial, sans-serif; 
@@ -210,16 +210,16 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: flex-start;
         }
         
         .photo-totals-section {
             /* Now holds the mini summary table */
-            min-width: 350px; /* Increased width for extra column */
+            min-width: 380px; 
         }
         
         /* Mini Summary Table Styles */
-        .summary-table { width: 100%; border-collapse: collapse; font-size: 11px; background-color: #fff; }
+        .summary-table { width: 100%; border-collapse: collapse; font-size: 11px; background-color: #fff; margin-top: 5px; }
         .summary-table th { background-color: #333; color: white; padding: 4px; text-align: center; border: 1px solid #999; }
         .summary-table td { border: 1px solid #ccc; padding: 4px; text-align: center; color: #333; }
         .summary-table td:first-child { text-align: left; font-weight: bold; }
@@ -385,14 +385,16 @@
             <div class="report-container">
                 <!-- UPDATED MAIN REPORT HEADER -->
                 <div class="main-report-header">
-                    <!-- Left Side: Title & Date -->
+                    <!-- Left Side: Title & Date & Stuffing Summary -->
                     <div class="photo-title-section">
                         <div style="font-size: 1.4rem; font-weight: bold; text-align: left; margin-bottom: 8px;">
                             HTPL Daily EXIM Movement Planning - <span id="reportDateHeader"></span>
                         </div>
+                        <!-- Stuffing Date Summary (Left) -->
+                        <div id="displayStuffingSummary" style="max-width: 350px;"></div>
                     </div>
                     
-                    <!-- Right Side: Summary Table -->
+                    <!-- Right Side: Sales Person Summary -->
                     <div class="photo-totals-section" id="displaySummarySection">
                         <!-- Populated by JS -->
                     </div>
@@ -434,14 +436,16 @@
     <!-- HIDDEN REPORT WRAPPER FOR PHOTO -->
     <div id="hiddenReportTableWrapper">
         <div class="photo-header">
-            <!-- Left Side: Title & Date -->
+            <!-- Left Side: Title & Date & Stuffing Summary -->
             <div class="photo-title-section">
                 <div style="font-size: 24px; font-weight: bold; color: #007bff; margin-bottom: 8px;">
                     HTPL Daily EXIM Movement Planning
                 </div>
-                <div id="hiddenReportDateHeader" style="font-size: 18px; font-weight: 600; color: #333;">
+                <div id="hiddenReportDateHeader" style="font-size: 18px; font-weight: 600; color: #333; margin-bottom: 12px;">
                     <!-- Date will be populated here -->
                 </div>
+                <!-- Stuffing Date Summary (Left) -->
+                <div id="photoStuffingSummary" style="max-width: 380px;"></div>
             </div>
 
             <!-- Right Side: Sales Person Summary Table -->
@@ -869,11 +873,11 @@
                 (r.entryDate || r.stuffingDate) === selectedDate
             );
 
-            // Calculate Totals for Main View
             let total20 = 0, total40 = 0, totalDbl = 0;
             
-            // --- NEW: Calculate Sales Person Summary Data ---
+            // Data for Summaries
             const summaryMap = {}; // { "Name": { c20: 0, c40: 0, cDbl: 0 } }
+            const dateMap = {}; // { "Date": { c20: 0, c40: 0, cDbl: 0 } }
 
             filteredRecords.forEach(r => {
                 const c20 = parseInt(r.container20) || 0;
@@ -885,14 +889,21 @@
                 total40 += c40;
                 totalDbl += cDbl;
                 
-                // Per Sales Person
+                // 1. Sales Person Summary
                 const sp = r.salesPerson || "Unknown";
                 if (!summaryMap[sp]) summaryMap[sp] = { c20: 0, c40: 0, cDbl: 0 };
                 summaryMap[sp].c20 += c20;
                 summaryMap[sp].c40 += c40;
                 summaryMap[sp].cDbl += cDbl;
+
+                // 2. Stuffing Date Summary
+                const sDate = r.stuffingDate || "Unknown";
+                if (!dateMap[sDate]) dateMap[sDate] = { c20: 0, c40: 0, cDbl: 0 };
+                dateMap[sDate].c20 += c20;
+                dateMap[sDate].c40 += c40;
+                dateMap[sDate].cDbl += cDbl;
             });
-            const totalTEUs = total20 + (total40 * 2) + (totalDbl * 2);
+            const totalTrailers = total20 + total40 + totalDbl; // Sum of containers, not TEUs
 
             // Date formatting
             const dateObj = new Date(selectedDate);
@@ -906,7 +917,7 @@
             // Update Hidden Wrapper Header (Photo)
             document.getElementById('hiddenReportDateHeader').innerHTML = dateDisplay;
             
-            // --- GENERATE MINI SUMMARY TABLE (For Both Display & Photo) ---
+            // --- GENERATE SALES PERSON SUMMARY TABLE (Right) ---
             let summaryHTML = `
                 <table class="summary-table">
                     <tr>
@@ -914,40 +925,73 @@
                         <th>20"</th>
                         <th>40"</th>
                         <th>Dbl 20"</th>
-                        <th>TEUs</th>
+                        <th>Trailers</th>
                     </tr>
             `;
-            
-            // Sort Sales Persons
             Object.keys(summaryMap).sort().forEach(sp => {
                 const d = summaryMap[sp];
-                const teu = d.c20 + (d.c40 * 2) + (d.cDbl * 2);
+                const trailerCount = d.c20 + d.c40 + d.cDbl;
                 summaryHTML += `
                     <tr>
                         <td>${sp}</td>
                         <td>${d.c20 || '-'}</td>
                         <td>${d.c40 || '-'}</td>
                         <td>${d.cDbl || '-'}</td>
-                        <td>${teu}</td>
+                        <td>${trailerCount}</td>
                     </tr>
                 `;
             });
-
-            // Footer Row (Grand Total - Styled Green)
             summaryHTML += `
                 <tr class="summary-total-row">
                     <td>Total ::</td>
                     <td>${total20}</td>
                     <td>${total40}</td>
                     <td>${totalDbl}</td>
-                    <td>${totalTEUs}</td>
+                    <td>${totalTrailers}</td>
                 </tr>
             </table>`;
             
-            // Inject into Photo Section
             document.getElementById('photoSummarySection').innerHTML = summaryHTML;
-            // Inject into Main Display Section
             document.getElementById('displaySummarySection').innerHTML = summaryHTML;
+
+            // --- GENERATE STUFFING DATE SUMMARY TABLE (Left) ---
+            let dateSummaryHTML = `
+                <table class="summary-table">
+                    <tr>
+                        <th>Stuffing Date</th>
+                        <th>20"</th>
+                        <th>40"</th>
+                        <th>Dbl 20"</th>
+                        <th>Trailers</th>
+                    </tr>
+            `;
+            Object.keys(dateMap).sort().forEach(dateKey => {
+                const d = dateMap[dateKey];
+                const trailerCount = d.c20 + d.c40 + d.cDbl;
+                const datePlain = formatDateForExcel(dateKey); // Use helper for simple text date
+                dateSummaryHTML += `
+                    <tr>
+                        <td>${datePlain}</td>
+                        <td>${d.c20 || '-'}</td>
+                        <td>${d.c40 || '-'}</td>
+                        <td>${d.cDbl || '-'}</td>
+                        <td>${trailerCount}</td>
+                    </tr>
+                `;
+            });
+            // Total Row for Stuffing Date Summary
+            dateSummaryHTML += `
+                <tr class="summary-total-row">
+                    <td>Total ::</td>
+                    <td>${total20}</td>
+                    <td>${total40}</td>
+                    <td>${totalDbl}</td>
+                    <td>${totalTrailers}</td>
+                </tr>
+            </table>`;
+
+            document.getElementById('photoStuffingSummary').innerHTML = dateSummaryHTML;
+            document.getElementById('displayStuffingSummary').innerHTML = dateSummaryHTML;
 
 
             // Render both tables
@@ -1342,8 +1386,9 @@
             visibleRecords.sort((a, b) => a.salesPerson.localeCompare(b.salesPerson));
 
             let t20=0, t40=0, tDbl=0;
-            // Sales Person Summary Data
-            const summaryMap = {};
+            // Data for Summaries
+            const summaryMap = {}; 
+            const dateMap = {};
 
             visibleRecords.forEach((r) => {
                 const c20 = parseInt(r.container20)||0;
@@ -1351,15 +1396,24 @@
                 const cDbl = parseInt(r.containerDbl20)||0;
                 t20+=c20; t40+=c40; tDbl+=cDbl;
                 
+                // Sales Person Data
                 const sp = r.salesPerson || "Unknown";
                 if (!summaryMap[sp]) summaryMap[sp] = { c20: 0, c40: 0, cDbl: 0 };
                 summaryMap[sp].c20 += c20;
                 summaryMap[sp].c40 += c40;
                 summaryMap[sp].cDbl += cDbl;
+
+                // Stuffing Date Data
+                const sDate = r.stuffingDate || "Unknown";
+                if (!dateMap[sDate]) dateMap[sDate] = { c20: 0, c40: 0, cDbl: 0 };
+                dateMap[sDate].c20 += c20;
+                dateMap[sDate].c40 += c40;
+                dateMap[sDate].cDbl += cDbl;
             });
             const totalTEU = t20 + (t40*2) + (tDbl*2);
+            const totalTrailers = t20 + t40 + tDbl; // NEW TOTAL LOGIC
 
-            // Construct Summary Table for Email
+            // 1. Sales Person Summary Table HTML
             let summaryTableHTML = `
                 <table border="1" cellpadding="4" cellspacing="0" style="border-collapse: collapse; font-family: Arial, sans-serif; font-size: 11px; background-color: #fff; width: 100%;">
                     <tr style="background-color: #333; color: white;">
@@ -1367,19 +1421,19 @@
                         <th style="padding: 4px; border: 1px solid #999;">20"</th>
                         <th style="padding: 4px; border: 1px solid #999;">40"</th>
                         <th style="padding: 4px; border: 1px solid #999;">Dbl 20"</th>
-                        <th style="padding: 4px; border: 1px solid #999;">TEUs</th>
+                        <th style="padding: 4px; border: 1px solid #999;">Trailers</th>
                     </tr>
             `;
             Object.keys(summaryMap).sort().forEach(sp => {
                 const d = summaryMap[sp];
-                const teu = d.c20 + (d.c40 * 2) + (d.cDbl * 2);
+                const trailers = d.c20 + d.c40 + d.cDbl;
                 summaryTableHTML += `
                     <tr>
                         <td style="border: 1px solid #ccc; padding: 4px;">${sp}</td>
                         <td style="border: 1px solid #ccc; padding: 4px; text-align: center;">${d.c20 || '-'}</td>
                         <td style="border: 1px solid #ccc; padding: 4px; text-align: center;">${d.c40 || '-'}</td>
                         <td style="border: 1px solid #ccc; padding: 4px; text-align: center;">${d.cDbl || '-'}</td>
-                        <td style="border: 1px solid #ccc; padding: 4px; text-align: center;">${teu}</td>
+                        <td style="border: 1px solid #ccc; padding: 4px; text-align: center;">${trailers}</td>
                     </tr>
                 `;
             });
@@ -1389,7 +1443,42 @@
                     <td style="border: 1px solid #badbcc; padding: 4px; text-align: center;">${t20}</td>
                     <td style="border: 1px solid #badbcc; padding: 4px; text-align: center;">${t40}</td>
                     <td style="border: 1px solid #badbcc; padding: 4px; text-align: center;">${tDbl}</td>
-                    <td style="border: 1px solid #badbcc; padding: 4px; text-align: center;">${totalTEU}</td>
+                    <td style="border: 1px solid #badbcc; padding: 4px; text-align: center;">${totalTrailers}</td>
+                </tr>
+            </table>`;
+
+            // 2. Stuffing Date Summary Table HTML
+            let dateTableHTML = `
+                <table border="1" cellpadding="4" cellspacing="0" style="border-collapse: collapse; font-family: Arial, sans-serif; font-size: 11px; background-color: #fff; width: 100%; margin-top: 10px;">
+                    <tr style="background-color: #333; color: white;">
+                        <th style="padding: 4px; border: 1px solid #999;">Stuffing Date</th>
+                        <th style="padding: 4px; border: 1px solid #999;">20"</th>
+                        <th style="padding: 4px; border: 1px solid #999;">40"</th>
+                        <th style="padding: 4px; border: 1px solid #999;">Dbl 20"</th>
+                        <th style="padding: 4px; border: 1px solid #999;">Total Trailers</th>
+                    </tr>
+            `;
+            Object.keys(dateMap).sort().forEach(k => {
+                const d = dateMap[k];
+                const trailers = d.c20 + d.c40 + d.cDbl;
+                dateTableHTML += `
+                    <tr>
+                        <td style="border: 1px solid #ccc; padding: 4px;">${formatDate(k)}</td>
+                        <td style="border: 1px solid #ccc; padding: 4px; text-align: center;">${d.c20 || '-'}</td>
+                        <td style="border: 1px solid #ccc; padding: 4px; text-align: center;">${d.c40 || '-'}</td>
+                        <td style="border: 1px solid #ccc; padding: 4px; text-align: center;">${d.cDbl || '-'}</td>
+                        <td style="border: 1px solid #ccc; padding: 4px; text-align: center;">${trailers}</td>
+                    </tr>
+                `;
+            });
+            // Total Row for Stuffing Date Summary (EMAIL)
+            dateTableHTML += `
+                <tr style="background-color: #d1e7dd; color: #0f5132; font-weight: bold;">
+                    <td style="border: 1px solid #badbcc; padding: 4px;">Total ::</td>
+                    <td style="border: 1px solid #badbcc; padding: 4px; text-align: center;">${t20}</td>
+                    <td style="border: 1px solid #badbcc; padding: 4px; text-align: center;">${t40}</td>
+                    <td style="border: 1px solid #badbcc; padding: 4px; text-align: center;">${tDbl}</td>
+                    <td style="border: 1px solid #badbcc; padding: 4px; text-align: center;">${totalTrailers}</td>
                 </tr>
             </table>`;
 
@@ -1409,12 +1498,15 @@
                                 <div style="font-size: 18px; font-weight: bold; color: #007bff; margin-bottom: 5px;">
                                     HTPL Daily EXIM Movement Planning
                                 </div>
-                                <div style="font-size: 16px; font-weight: 600; color: #333;">
+                                <div style="font-size: 16px; font-weight: 600; color: #333; margin-bottom: 10px;">
                                     ${dateStr}<br>
                                     <span style="background-color: #ffff00; color: black; font-weight: bold; padding: 1px 4px; border-radius: 3px; font-size: 0.9em;">(${dayName})</span>
                                 </div>
+                                <!-- Stuffing Date Table Left -->
+                                ${dateTableHTML}
                             </td>
                             <td valign="top" width="350">
+                                <!-- Sales Person Table Right -->
                                 ${summaryTableHTML}
                             </td>
                         </tr>
