@@ -243,8 +243,8 @@
         /* Loading Overlay */
         #loadingOverlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255,255,255,0.8); z-index: 9999;
-            display: flex; justify-content: center; align-items: center;
+            background: rgba(255,255,255,0.9); z-index: 9999;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
             font-size: 1.5rem; font-weight: bold; color: #007bff;
         }
         
@@ -252,7 +252,10 @@
     </style>
 </head>
 <body>
-    <div id="loadingOverlay">Connecting to Database...</div>
+    <div id="loadingOverlay">
+        <div>Connecting to Database...</div>
+        <!-- Button will be injected here if it takes too long -->
+    </div>
 
     <div class="main-container">
         
@@ -565,19 +568,56 @@
 
             sortSalesPersonOptions();
 
+            // Safety Timeout: Force close overlay after 8 seconds
+            setTimeout(() => {
+                const overlay = document.getElementById('loadingOverlay');
+                if (overlay && overlay.style.display !== 'none') {
+                    overlay.style.display = 'none';
+                    console.warn("Loading timed out. Removing overlay.");
+                }
+            }, 8000);
+
+            // Manual Close Button (Appears after 3 seconds)
+            setTimeout(() => {
+                const overlay = document.getElementById('loadingOverlay');
+                if(overlay && overlay.style.display !== 'none') {
+                    const btn = document.createElement('button');
+                    btn.innerText = "Close Loading (Force Open)";
+                    btn.style.marginTop = "20px";
+                    btn.style.padding = "10px 20px";
+                    btn.style.background = "#dc3545";
+                    btn.style.color = "white";
+                    btn.style.border = "none";
+                    btn.style.borderRadius = "5px";
+                    btn.style.cursor = "pointer";
+                    btn.style.fontSize = "1rem";
+                    btn.onclick = () => overlay.style.display = 'none';
+                    overlay.appendChild(btn);
+                }
+            }, 3000);
+
             try {
-                // Authentication
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await auth.signInWithCustomToken(__initial_auth_token);
-                } else {
+                // Authentication with Fallback
+                try {
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await auth.signInWithCustomToken(__initial_auth_token);
+                    } else {
+                        throw new Error("No custom token");
+                    }
+                } catch (authErr) {
+                    console.warn("Custom token failed, trying anonymous auth...", authErr);
                     await auth.signInAnonymously();
                 }
 
-                // Listen to collections
+                // Listen to collections with Error Handling
                 SALES_COLLECTION.onSnapshot((snapshot) => {
                     allRecords = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     updateTableDisplay();
                     document.getElementById('loadingOverlay').style.display = 'none';
+                }, (error) => {
+                    console.error("Sales Data Error:", error);
+                    document.getElementById('loadingOverlay').style.display = 'none';
+                    alert("Error loading Sales Data. You may be offline.");
                 });
                 
                 MASTER_COLLECTION.onSnapshot((snapshot) => {
@@ -586,10 +626,13 @@
                         masterData[doc.id] = doc.data();
                     });
                     renderMasterTable();
+                }, (error) => {
+                    console.error("Master Data Error:", error);
                 });
             } catch (err) {
-                console.error("Auth Error:", err);
-                alert("Failed to connect to database.");
+                console.error("Auth/Init Error:", err);
+                document.getElementById('loadingOverlay').style.display = 'none';
+                alert("Failed to connect to database: " + err.message);
             }
         });
 
@@ -869,9 +912,16 @@
                 return;
             }
 
-            const filteredRecords = allRecords.filter(r => 
-                (r.entryDate || r.stuffingDate) === selectedDate
-            );
+            // NEW LOGIC: 
+            // 1. Future Dates: stuffingDate > selectedDate
+            // 2. Current/Selected Date: stuffingDate == selectedDate AND entryDate == selectedDate
+            const filteredRecords = allRecords.filter(r => {
+                if (r.stuffingDate > selectedDate) return true;
+                if (r.stuffingDate === selectedDate) {
+                    return r.entryDate === selectedDate;
+                }
+                return false;
+            });
 
             let total20 = 0, total40 = 0, totalDbl = 0;
             
@@ -1248,135 +1298,157 @@
             dataOptions.forEach(option => select.appendChild(option));
         }
 
+      // --- REPLACED EXCEL DOWNLOAD FUNCTION (HTML TABLE METHOD) ---
       function downloadSalesDataAsExcel() {
-    const selectedDate = document.getElementById('viewDate').value;
-    const records = allRecords.filter(r => (r.entryDate || r.stuffingDate) === selectedDate);
-    
-    if (records.length === 0) {
-        alert("इस तारीख पर कोई डेटा उपलब्ध नहीं है।");
-        return;
-    }
-
-    // सॉर्टिंग
-    records.sort((a, b) => {
-        if (a.stuffingDate !== b.stuffingDate) return a.stuffingDate.localeCompare(b.stuffingDate);
-        return a.salesPerson.localeCompare(b.salesPerson);
-    });
-
-    // प्लेन टेक्स्ट डेट
-    function getPlainDate(dateStr) {
-        if (!dateStr) return '';
-        const d = new Date(dateStr);
-        const dd = String(d.getDate()).padStart(2, '0');
-        const mm = String(d.getMonth() + 1).padStart(2, '0');
-        const yyyy = d.getFullYear();
-        const dayName = d.toLocaleString('en-US', { weekday: 'long' });
-        return `${dd}-${mm}-${yyyy} (${dayName})`;
-    }
-
-    // डेटा
-    const data = records.map((r, i) => ({
-        "Sr No.": i + 1,
-        "Sales Person": r.salesPerson,
-        "Customer Name": r.customerName,
-        "Location": r.location || '-',
-        "20\"": r.container20 || '',
-        "40\"": r.container40 || '',
-        "Double 20\"": r.containerDbl20 || '',
-        "Stuffing Date": getPlainDate(r.stuffingDate),
-        "Priority": r.priority,
-        "Remarks": r.remarks || '-'
-    }));
-
-    // ग्रैंड टोटल
-    let total20 = 0, total40 = 0, totalDbl = 0;
-    records.forEach(r => {
-        total20 += parseInt(r.container20) || 0;
-        total40 += parseInt(r.container40) || 0;
-        totalDbl += parseInt(r.containerDbl20) || 0;
-    });
-    const totalTEUs = total20 + (total40 * 2) + (totalDbl * 2);
-
-    data.push({
-        "Sr No.": "GRAND TOTAL:",
-        "Sales Person": "",
-        "Customer Name": "",
-        "Location": "",
-        "20\"": total20,
-        "40\"": total40,
-        "Double 20\"": totalDbl,
-        "Stuffing Date": `TOTAL TEUs: ${totalTEUs}`,
-        "Priority": "",
-        "Remarks": ""
-    });
-
-    // वर्कशीट
-    const ws = XLSX.utils.json_to_sheet(data);
-
-    // कॉलम विड्थ
-    ws['!cols'] = [
-        { wch: 8 }, { wch: 18 }, { wch: 30 }, { wch: 15 },
-        { wch: 8 }, { wch: 8 }, { wch: 12 }, { wch: 22 },
-        { wch: 10 }, { wch: 25 }
-    ];
-
-    // सभी सेल्स में बॉर्डर (डिफ़ॉल्ट Excel स्टाइल)
-    const range = XLSX.utils.decode_range(ws['!ref']);
-    for (let R = range.s.r; R <= range.e.r; ++R) {
-        for (let C = range.s.c; C <= range.e.c; ++C) {
-            const cell = XLSX.utils.encode_cell({ r: R, c: C });
-            if (!ws[cell]) continue;
-            ws[cell].s = ws[cell].s || {};
-            ws[cell].s.border = {
-                top: { style: "thin", color: { rgb: "000000" } },
-                bottom: { style: "thin", color: { rgb: "000000" } },
-                left: { style: "thin", color: { rgb: "000000" } },
-                right: { style: "thin", color: { rgb: "000000" } }
-            };
-        }
-    }
-
-    // हेडर रो (पहली रो)
-    for (let C = 0; C < 10; ++C) {
-        const cell = XLSX.utils.encode_cell({ r: 0, c: C });
-        if (ws[cell]) {
-            ws[cell].s.font = { bold: true, color: { rgb: "FFFFFF" } };
-            ws[cell].s.fill = { fgColor: { rgb: "333333" } };
-            ws[cell].s.alignment = { horizontal: "center", vertical: "center" };
-        }
-    }
-
-    // ग्रैंड टोटल रो (आखिरी रो)
-    const lastRow = data.length; // हेडर + डेटा + 1
-    for (let C = 0; C < 10; ++C) {
-        const cell = XLSX.utils.encode_cell({ r: lastRow, c: C });
-        if (ws[cell]) {
-            if (C === 0) {
-                ws[cell].s.font = { bold: true };
-                ws[cell].s.fill = { fgColor: { rgb: "E0E0E0" } };
-                ws[cell].s.alignment = { horizontal: "right" };
-            } else if (C >= 4 && C <= 6) {
-                ws[cell].s.font = { bold: true };
-                ws[cell].s.fill = { fgColor: { rgb: "E0E0E0" } };
-                ws[cell].s.alignment = { horizontal: "center" };
-            } else if (C === 7) {
-                ws[cell].s.font = { bold: true, color: { rgb: "0F5132" } };
-                ws[cell].s.fill = { fgColor: { rgb: "D1E7DD" } };
-                ws[cell].s.alignment = { horizontal: "center" };
-            }
-        }
-    }
-
-    // Excel फाइल डाउनलोड
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Export Planning");
-    XLSX.writeFile(wb, `Export_Planning_${selectedDate}.xlsx`);
-}
+          const selectedDate = document.getElementById('viewDate').value;
+          
+          // NEW FILTER LOGIC APPLIED HERE AS WELL
+          const records = allRecords.filter(r => {
+                if (r.stuffingDate > selectedDate) return true;
+                if (r.stuffingDate === selectedDate) {
+                    return r.entryDate === selectedDate;
+                }
+                return false;
+          });
+          
+          if (records.length === 0) {
+              alert("इस तारीख par koi data available nahi hai (based on current logic).");
+              return;
+          }
+      
+          // Sort
+          records.sort((a, b) => {
+              if (a.stuffingDate !== b.stuffingDate) return a.stuffingDate.localeCompare(b.stuffingDate);
+              return a.salesPerson.localeCompare(b.salesPerson);
+          });
+      
+          let total20 = 0, total40 = 0, totalDbl = 0;
+      
+          // Helper for date
+          function getPlainDate(dateStr) {
+              if (!dateStr) return '';
+              const d = new Date(dateStr);
+              const dd = String(d.getDate()).padStart(2, '0');
+              const mm = String(d.getMonth() + 1).padStart(2, '0');
+              const yyyy = d.getFullYear();
+              const dayName = d.toLocaleString('en-US', { weekday: 'long' });
+              return `${dd}-${mm}-${yyyy} (${dayName})`;
+          }
+      
+          // Build HTML Table String for Excel
+          let table = `
+              <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+              <head>
+                  <!--[if gte mso 9]>
+                  <xml>
+                      <x:ExcelWorkbook>
+                          <x:ExcelWorksheets>
+                              <x:ExcelWorksheet>
+                                  <x:Name>Export Planning</x:Name>
+                                  <x:WorksheetOptions>
+                                      <x:DisplayGridlines/>
+                                  </x:WorksheetOptions>
+                              </x:ExcelWorksheet>
+                          </x:ExcelWorksheets>
+                      </x:ExcelWorkbook>
+                  </xml>
+                  <![endif]-->
+                  <style>
+                      table { border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; font-size: 11px; }
+                      th { background-color: #333333; color: white; border: 1px solid black; padding: 5px; font-weight: bold; text-align: center; }
+                      td { border: 1px solid black; padding: 5px; text-align: left; vertical-align: middle; }
+                      .high-priority { background-color: #b5ff0d; }
+                      .text-center { text-align: center; }
+                      .total-row { background-color: #e0e0e0; font-weight: bold; }
+                      .grand-total { background-color: #d1e7dd; color: #0f5132; font-weight: bold; text-align: center; }
+                  </style>
+              </head>
+              <body>
+                  <table>
+                      <thead>
+                          <tr>
+                              <th style="width: 50px;">Sr No.</th>
+                              <th style="width: 120px;">Sales Person</th>
+                              <th style="width: 200px;">Customer Name</th>
+                              <th style="width: 100px;">Location</th>
+                              <th style="width: 60px;">20"</th>
+                              <th style="width: 60px;">40"</th>
+                              <th style="width: 80px;">Double 20"</th>
+                              <th style="width: 150px;">Stuffing Date</th>
+                              <th style="width: 80px;">Priority</th>
+                              <th style="width: 200px;">Remarks</th>
+                          </tr>
+                      </thead>
+                      <tbody>
+          `;
+      
+          records.forEach((r, i) => {
+              const c20 = parseInt(r.container20) || 0;
+              const c40 = parseInt(r.container40) || 0;
+              const cDbl = parseInt(r.containerDbl20) || 0;
+              
+              total20 += c20;
+              total40 += c40;
+              totalDbl += cDbl;
+      
+              const bgStyle = r.priority === 'High' ? 'style="background-color: #b5ff0d;"' : '';
+      
+              table += `
+                  <tr>
+                      <td class="text-center" ${bgStyle}>${i + 1}</td>
+                      <td ${bgStyle}>${r.salesPerson}</td>
+                      <td ${bgStyle}>${r.customerName}</td>
+                      <td ${bgStyle}>${r.location || '-'}</td>
+                      <td class="text-center" ${bgStyle}>${c20 || ''}</td>
+                      <td class="text-center" ${bgStyle}>${c40 || ''}</td>
+                      <td class="text-center" ${bgStyle}>${cDbl || ''}</td>
+                      <td class="text-center" ${bgStyle}>${getPlainDate(r.stuffingDate)}</td>
+                      <td class="text-center" ${bgStyle}>${r.priority}</td>
+                      <td ${bgStyle}>${r.remarks || '-'}</td>
+                  </tr>
+              `;
+          });
+      
+          const totalTrailers = total20 + total40 + totalDbl;
+      
+          table += `
+                      </tbody>
+                      <tfoot>
+                          <tr class="total-row">
+                              <td colspan="4" style="text-align: right; background-color: #e0e0e0;">GRAND TOTAL:</td>
+                              <td class="text-center" style="background-color: #e0e0e0;">${total20}</td>
+                              <td class="text-center" style="background-color: #e0e0e0;">${total40}</td>
+                              <td class="text-center" style="background-color: #e0e0e0;">${totalDbl}</td>
+                              <td colspan="3" class="grand-total" style="background-color: #d1e7dd; color: #0f5132;">TOTAL TRAILERS: ${totalTrailers}</td>
+                          </tr>
+                      </tfoot>
+                  </table>
+              </body>
+              </html>
+          `;
+      
+          const blob = new Blob([table], { type: 'application/vnd.ms-excel' });
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `Export_Planning_${selectedDate}.xls`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+      }
 
         // --- NEW: EMAIL REPORT (OUTLOOK COPY) ---
         async function emailReport() {
             const selectedDate = document.getElementById('viewDate').value;
-            const visibleRecords = allRecords.filter(r => (r.entryDate || r.stuffingDate) === selectedDate);
+            
+            // NEW FILTER LOGIC APPLIED HERE AS WELL
+            const visibleRecords = allRecords.filter(r => {
+                if (r.stuffingDate > selectedDate) return true;
+                if (r.stuffingDate === selectedDate) {
+                    return r.entryDate === selectedDate;
+                }
+                return false;
+            });
 
             if (visibleRecords.length === 0) {
                 alert("Email karne ke liye is date par koi data nahi hai.");
@@ -1471,7 +1543,7 @@
                     </tr>
                 `;
             });
-            // Total Row for Stuffing Date Summary (EMAIL)
+            // Total Row for Stuffing Date Summary (EMAIL) - ADDED HERE
             dateTableHTML += `
                 <tr style="background-color: #d1e7dd; color: #0f5132; font-weight: bold;">
                     <td style="border: 1px solid #badbcc; padding: 4px;">Total ::</td>
@@ -1562,7 +1634,7 @@
             </p>
             </div>`;
 
-            // COPY TO CLIPBOARD
+            // COPY TO CLIPBOARD - USING HIDDEN LINK FOR BETTER COMPATIBILITY
             try {
                 const blob = new Blob([html], {type: "text/html"});
                 const textBlob = new Blob([html.replace(/<[^>]+>/g, '')], {type: "text/plain"});
@@ -1570,25 +1642,34 @@
                 
                 await navigator.clipboard.write(data);
                 
-                // OPEN MAILTO
+                // Create mailto link
+                const recipients = "tufan.singh@hindcarriers.com;hcpl.ludhiana@hindcarriers.com;kilaraipur@hindcarriers.com;Marketing.Ludhiana@hindterminals.com;customerserviceludhiana@hindterminals.com;sukhvir.dhankhar@hindcarriers.com";
                 const subject = `HTPL Daily EXIM Movement Planning :: (${formatDate(selectedDate)})`;
-                const body = "-";
-                const mailtoLink = `mailto:tufan.singh@hindcarriers.com;hcpl.ludhiana@hindcarriers.com;kilaraipur@hindcarriers.com;Marketing.Ludhiana@hindterminals.com;customerserviceludhiana@hindterminals.com;sukhvir.dhankhar@hindcarriers.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                const body = "-"; // Outlook will handle paste
+                const mailtoLink = `mailto:${recipients}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
                 
+                // Trigger Link Click - Using window.location to properly trigger mail client
                 window.location.href = mailtoLink;
                 
-                alert("✅ Report Copied! \n\nOutlook/Mail app has opened. \nJust press 'Ctrl + V' (Paste) in the email body.");
+                alert("✅ Report Copied Successfully!\n\n👉 Outlook me Paste (Ctrl + V) karein.\n\nNOTE: Agar Chrome open ho raha hai, to us PC me 'Default Email App' Outlook set nahi hai. Aap manually Outlook open karke paste kar sakte hain.");
                 
             } catch (err) {
-                console.error("Clipboard Error:", err);
-                // Fallback for secure context issues
-                alert("Clipboard copy failed (Browser Restriction). Please take a screenshot instead.");
+                console.error("Clipboard/Mailto Error:", err);
+                alert("Action failed. Please check console or try manually.");
             }
         }
 
        async function shareReportOnWhatsApp() {
     const selectedDate = document.getElementById('viewDate').value;
-    const visibleRecords = allRecords.filter(r => (r.entryDate || r.stuffingDate) === selectedDate);
+    
+    // NEW FILTER LOGIC APPLIED HERE AS WELL
+    const visibleRecords = allRecords.filter(r => {
+                if (r.stuffingDate > selectedDate) return true;
+                if (r.stuffingDate === selectedDate) {
+                    return r.entryDate === selectedDate;
+                }
+                return false;
+    });
     
     if (visibleRecords.length === 0) {
         alert("Share करने के लिए इस तारीख पर कोई डेटा नहीं है।");
