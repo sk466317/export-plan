@@ -20,7 +20,7 @@
         body { font-family: Arial, sans-serif; margin: 0; padding: 8px; background-color: #ffffff; color: #333; }
         
         /* Main Container */
-        .main-container { max-width: 1180px; margin: auto; padding: 12px; border-radius: 8px; background-color: #ffffff; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); }
+        .main-container { max-width: 1340px; margin: auto; padding: 12px; border-radius: 8px; background-color: #ffffff; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); }
         
         /* Entry Form Section */
         .entry-container { padding: 12px; border: 1px solid #cceeff; border-radius: 8px; background-color: #999999; margin-bottom: 15px; }
@@ -140,33 +140,32 @@
 
         #reportTableContainer { overflow-x: auto; margin-top: 8px; background-color: white; border-radius: 5px; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05); }
         #reportTable { width: 100%; border-collapse: collapse; font-size: 0.75rem; table-layout: fixed; }
-        #reportTable th, #reportTable td { border: 1px solid #ddd; padding: 4px 6px; text-align: left; white-space: normal; word-wrap: break-word; font-weight: bold; vertical-align: middle; }
+        #reportTable th, #reportTable td { box-sizing: border-box; border: 1px solid #ddd; padding: 4px 4px; text-align: left; white-space: normal; word-wrap: break-word; font-weight: bold; vertical-align: middle; }
         #reportTable th { background-color: #333333; color: white; position: sticky; top: 0; z-index: 10; font-size: 0.72rem; }
         
         /* Column Widths */
         #reportTable th:nth-child(1), #reportTable td:nth-child(1) { width: 54px; min-width: 54px; max-width: 54px; text-align: center; white-space: nowrap; } /* Sr No */
-        #reportTable th:nth-child(2), #reportTable td:nth-child(2) { width: 110px; min-width: 110px; max-width: 110px; } /* Sales Person */
-        #reportTable th:nth-child(3), #reportTable td:nth-child(3) { width: 300px; min-width: 300px; max-width: 300px; overflow: hidden; text-overflow: ellipsis; } /* Customer Name */
-        #reportTable th:nth-child(4), #reportTable td:nth-child(4) { width: 170px; min-width: 170px; max-width: 170px; overflow: hidden; text-overflow: ellipsis; } /* Location */
+        #reportTable th:nth-child(2), #reportTable td:nth-child(2) { width: 86px; min-width: 86px; max-width: 86px; } /* Sales Person */
+        #reportTable th:nth-child(3), #reportTable td:nth-child(3) { width: 260px; min-width: 260px; max-width: 260px; overflow: hidden; text-overflow: ellipsis; } /* Customer Name */
+        #reportTable th:nth-child(4), #reportTable td:nth-child(4) { width: 145px; min-width: 145px; max-width: 145px; overflow: hidden; text-overflow: ellipsis; } /* Location */
         #reportTable th:nth-child(5), #reportTable td:nth-child(5) { width: 26px !important; min-width: 26px !important; max-width: 26px !important; text-align: center; padding-left: 1px !important; padding-right: 1px !important; } /* 20 */
         #reportTable th:nth-child(6), #reportTable td:nth-child(6) { width: 26px !important; min-width: 26px !important; max-width: 26px !important; text-align: center; padding-left: 1px !important; padding-right: 1px !important; } /* 40 */
-        #reportTable th:nth-child(7), #reportTable td:nth-child(7) { width: 78px; min-width: 78px; text-align: center; } /* Dbl */
-        #reportTable th:nth-child(8), #reportTable td:nth-child(8) { width: 110px; min-width: 110px; text-align: center; } /* Date */
-        #reportTable th:nth-child(9), #reportTable td:nth-child(9) { width: 82px; min-width: 82px; text-align: center; } /* Priority */
-        #reportTable th:nth-child(10), #reportTable td:nth-child(10) { width: 150px; min-width: 150px; } /* Remarks */
-        #reportTable th:nth-child(11), #reportTable td:nth-child(11) { width: 92px; min-width: 92px; text-align: center; } /* Actions */
+        #reportTable th:nth-child(7), #reportTable td:nth-child(7) { width: 66px; min-width: 66px; text-align: center; } /* Dbl */
+        #reportTable th:nth-child(8), #reportTable td:nth-child(8) { width: 92px; min-width: 92px; text-align: center; } /* Date */
+        #reportTable th:nth-child(9), #reportTable td:nth-child(9) { width: 74px; min-width: 74px; text-align: center; } /* Priority */
+        #reportTable th:nth-child(10), #reportTable td:nth-child(10) { width: 114px; min-width: 114px; } /* Remarks */
+        #reportTable th:nth-child(11), #reportTable td:nth-child(11) { width: 88px; min-width: 88px; max-width: 88px; text-align: center; padding-left: 2px; padding-right: 2px; } /* Actions */
         
         #reportTable tbody tr:nth-child(even) { background-color: #f8f8f8; }
         #reportTable .high-priority { background-color: #ff9ecf !important; }
         #reportTable tfoot td { font-weight: bold; background-color: #e0e0e0; border-top: 2px solid #333; color: #000; }
         
-        /* Action buttons */
-        .action-cell { display: flex; flex-direction: column; gap: 2px; align-items: center; }
-        .action-cell button { padding: 2px 5px; margin: 0; font-size: 0.7rem; border-radius: 3px; cursor: pointer; transition: background-color 0.2s; width: 60px; font-weight: bold; }
-        .edit-btn { background-color: #007bff; color: white; }
-        .edit-btn:hover { background-color: #0056b3; }
-        .delete-btn { background-color: #dc3545; color: white; }
-        .delete-btn:hover { background-color: #c82333; }
+        /* Action links */
+        .action-cell { display: inline-flex; align-items: center; justify-content: flex-start; gap: 6px; width: 100%; min-height: 100%; white-space: nowrap; text-align: left; }
+        .action-link { font-size: 0.82rem; font-weight: 700; text-decoration: underline; cursor: pointer; }
+        .action-link.edit-link { color: #0056b3; }
+        .action-link.delete-link { color: #dc3545; }
+        .action-separator { color: #666; font-weight: 700; }
         
         @media (max-width: 768px) {
             .input-item { flex: 1 1 100%; min-width: unset; }
@@ -1155,19 +1154,24 @@
                 if (targetTableId === 'reportTable') {
                     const actionCell = row.insertCell();
                     actionCell.classList.add('action-cell');
-                    
-                    const editBtn = document.createElement('button');
-                    editBtn.textContent = 'Edit';
-                    editBtn.classList.add('edit-btn');
-                    editBtn.onclick = () => editRecord(record.id); 
-                    
-                    const deleteBtn = document.createElement('button');
-                    deleteBtn.textContent = 'Delete';
-                    deleteBtn.classList.add('delete-btn');
-                    deleteBtn.onclick = () => deleteRecord(record.id); 
-                    
-                    actionCell.appendChild(editBtn);
-                    actionCell.appendChild(deleteBtn);
+
+                    const editLink = document.createElement('span');
+                    editLink.textContent = 'Edit';
+                    editLink.classList.add('action-link', 'edit-link');
+                    editLink.onclick = () => editRecord(record.id);
+
+                    const separator = document.createElement('span');
+                    separator.textContent = '|';
+                    separator.classList.add('action-separator');
+
+                    const deleteLink = document.createElement('span');
+                    deleteLink.textContent = 'Delete';
+                    deleteLink.classList.add('action-link', 'delete-link');
+                    deleteLink.onclick = () => deleteRecord(record.id);
+
+                    actionCell.appendChild(editLink);
+                    actionCell.appendChild(separator);
+                    actionCell.appendChild(deleteLink);
                 } else {
                     const ac = row.insertCell();
                     ac.classList.add('action-col');
