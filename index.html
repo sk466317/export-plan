@@ -20,7 +20,7 @@
         body { font-family: Arial, sans-serif; margin: 0; padding: 8px; background-color: #ffffff; color: #333; }
         
         /* Main Container */
-        .main-container { max-width: 1400px; margin: auto; padding: 12px; border-radius: 8px; background-color: #ffffff; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); }
+        .main-container { max-width: 1180px; margin: auto; padding: 12px; border-radius: 8px; background-color: #ffffff; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); }
         
         /* Entry Form Section */
         .entry-container { padding: 12px; border: 1px solid #cceeff; border-radius: 8px; background-color: #999999; margin-bottom: 15px; }
@@ -139,25 +139,25 @@
         }
 
         #reportTableContainer { overflow-x: auto; margin-top: 8px; background-color: white; border-radius: 5px; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05); }
-        #reportTable { width: 100%; border-collapse: collapse; font-size: 0.75rem; table-layout: auto; }
+        #reportTable { width: 100%; border-collapse: collapse; font-size: 0.75rem; table-layout: fixed; }
         #reportTable th, #reportTable td { border: 1px solid #ddd; padding: 4px 6px; text-align: left; white-space: normal; word-wrap: break-word; font-weight: bold; vertical-align: middle; }
         #reportTable th { background-color: #333333; color: white; position: sticky; top: 0; z-index: 10; font-size: 0.72rem; }
         
         /* Column Widths */
-        #reportTable th:nth-child(1), #reportTable td:nth-child(1) { min-width: 35px; text-align: center; } /* Sr No */
-        #reportTable th:nth-child(2), #reportTable td:nth-child(2) { min-width: 95px; } /* Sales Person */
-        #reportTable th:nth-child(3), #reportTable td:nth-child(3) { min-width: 150px; } /* Customer Name */
-        #reportTable th:nth-child(4), #reportTable td:nth-child(4) { min-width: 75px; } /* Location */
-        #reportTable th:nth-child(5), #reportTable td:nth-child(5) { min-width: 20px; text-align: center; } /* 20 */
-        #reportTable th:nth-child(6), #reportTable td:nth-child(6) { min-width: 45px; text-align: center; } /* 40 */
-        #reportTable th:nth-child(7), #reportTable td:nth-child(7) { min-width: 75px; text-align: center; } /* Dbl */
-        #reportTable th:nth-child(8), #reportTable td:nth-child(8) { min-width: 75px; text-align: center; } /* Date */
-        #reportTable th:nth-child(9), #reportTable td:nth-child(9) { min-width: 55px; text-align: center; } /* Priority */
-        #reportTable th:nth-child(10), #reportTable td:nth-child(10) { min-width: 100px; } /* Remarks */
-        #reportTable th:nth-child(11), #reportTable td:nth-child(11) { min-width: 75px; text-align: center; } /* Actions */
+        #reportTable th:nth-child(1), #reportTable td:nth-child(1) { width: 54px; min-width: 54px; max-width: 54px; text-align: center; white-space: nowrap; } /* Sr No */
+        #reportTable th:nth-child(2), #reportTable td:nth-child(2) { width: 110px; min-width: 110px; max-width: 110px; } /* Sales Person */
+        #reportTable th:nth-child(3), #reportTable td:nth-child(3) { width: 300px; min-width: 300px; max-width: 300px; overflow: hidden; text-overflow: ellipsis; } /* Customer Name */
+        #reportTable th:nth-child(4), #reportTable td:nth-child(4) { width: 170px; min-width: 170px; max-width: 170px; overflow: hidden; text-overflow: ellipsis; } /* Location */
+        #reportTable th:nth-child(5), #reportTable td:nth-child(5) { width: 26px !important; min-width: 26px !important; max-width: 26px !important; text-align: center; padding-left: 1px !important; padding-right: 1px !important; } /* 20 */
+        #reportTable th:nth-child(6), #reportTable td:nth-child(6) { width: 26px !important; min-width: 26px !important; max-width: 26px !important; text-align: center; padding-left: 1px !important; padding-right: 1px !important; } /* 40 */
+        #reportTable th:nth-child(7), #reportTable td:nth-child(7) { width: 78px; min-width: 78px; text-align: center; } /* Dbl */
+        #reportTable th:nth-child(8), #reportTable td:nth-child(8) { width: 110px; min-width: 110px; text-align: center; } /* Date */
+        #reportTable th:nth-child(9), #reportTable td:nth-child(9) { width: 82px; min-width: 82px; text-align: center; } /* Priority */
+        #reportTable th:nth-child(10), #reportTable td:nth-child(10) { width: 150px; min-width: 150px; } /* Remarks */
+        #reportTable th:nth-child(11), #reportTable td:nth-child(11) { width: 92px; min-width: 92px; text-align: center; } /* Actions */
         
         #reportTable tbody tr:nth-child(even) { background-color: #f8f8f8; }
-        #reportTable .high-priority { background-color: #b5ff0d !important; }
+        #reportTable .high-priority { background-color: #ff9ecf !important; }
         #reportTable tfoot td { font-weight: bold; background-color: #e0e0e0; border-top: 2px solid #333; color: #000; }
         
         /* Action buttons */
@@ -236,7 +236,9 @@
         #hiddenReportTable { width: 100%; border-collapse: collapse; font-size: 13px; background-color: white; table-layout: auto; }
         #hiddenReportTable th, #hiddenReportTable td { border: 1px solid #333; padding: 6px 8px; text-align: left; white-space: normal; word-wrap: break-word; font-weight: bold; vertical-align: middle; }
         #hiddenReportTable th { background-color: #333333; color: white; font-size: 13px; text-transform: uppercase; }
-        #hiddenReportTable .high-priority { background-color: #b5ff0d !important; }
+        #hiddenReportTable .high-priority { background-color: #ff9ecf !important; }
+        #hiddenReportTable th:nth-child(5), #hiddenReportTable td:nth-child(5) { width: 34px; min-width: 34px; max-width: 34px; text-align: center; padding-left: 2px; padding-right: 2px; }
+        #hiddenReportTable th:nth-child(6), #hiddenReportTable td:nth-child(6) { width: 34px; min-width: 34px; max-width: 34px; text-align: center; padding-left: 2px; padding-right: 2px; }
         #hiddenReportTable tfoot td { font-weight: bold; background-color: #eee; border-top: 2px solid #333; }
         #hiddenReportTable .action-col { display: none !important; }
 
@@ -549,6 +551,30 @@
         // Fix for emailReport missing function (alias to Excel formatter)
         function formatDate(dateString) {
             return formatDateForExcel(dateString);
+        }
+
+        function parseIsoDateLocal(dateString) {
+            if (!dateString || typeof dateString !== 'string') return null;
+            const parts = dateString.split('-').map(Number);
+            if (parts.length !== 3 || parts.some(n => Number.isNaN(n))) return null;
+            return new Date(parts[0], parts[1] - 1, parts[2]);
+        }
+
+        function getStuffingDateDot(stuffingDate, baseDate) {
+            const stuffing = parseIsoDateLocal(stuffingDate);
+            const base = parseIsoDateLocal(baseDate);
+            if (!stuffing || !base) return null;
+            const dayDiff = Math.round((stuffing.getTime() - base.getTime()) / 86400000);
+            if (dayDiff === 1) return { color: '#58b22f', symbol: '●' };
+            if (dayDiff === 2) return { color: '#ff1f1f', symbol: '●' };
+            return null;
+        }
+
+        function getCustomerNameHtml(record, baseDate) {
+            const dot = getStuffingDateDot(record.stuffingDate, baseDate);
+            const customerName = record.customerName || '-';
+            if (!dot) return `<span style="font-weight:400; font-size:1em; white-space:nowrap;">${customerName}</span>`;
+            return `<span style="font-weight:400; font-size:1em; white-space:nowrap;"><span style="color:${dot.color}; font-size:1.55em; line-height:1; vertical-align:middle; display:inline-block;">${dot.symbol}</span> ${customerName}</span>`;
         }
 
         // ==========================================
@@ -1055,6 +1081,7 @@
                 console.warn(`Table with ID ${targetTableId} not found`);
                 return;
             }
+            const selectedDate = document.getElementById('viewDate')?.value || '';
             
             const tbody = table.querySelector('tbody');
             const tfoot = table.querySelector('tfoot');
@@ -1068,19 +1095,26 @@
             tfoot.innerHTML = '';
             
             records.sort((a, b) => {
-                // 1. Sort by stuffingDate first
-                if (a.stuffingDate !== b.stuffingDate) {
-                    return a.stuffingDate.localeCompare(b.stuffingDate);
-                }
-                // 2. Sort by Sales Person
-                return a.salesPerson.localeCompare(b.salesPerson);
+                // 1. Sort by Sales Person first for merged grouping
+                const salesCompare = (a.salesPerson || '').localeCompare(b.salesPerson || '');
+                if (salesCompare !== 0) return salesCompare;
+                // 2. Then sort by stuffing date within each sales person
+                return (a.stuffingDate || '').localeCompare(b.stuffingDate || '');
             });
             
             let total20 = 0, total40 = 0, totalDbl20 = 0;
-            
+
+            const getSalesPersonGroupSize = (startIndex) => {
+                const salesPerson = records[startIndex]?.salesPerson || '';
+                let size = 1;
+                while ((startIndex + size) < records.length && (records[startIndex + size]?.salesPerson || '') === salesPerson) {
+                    size += 1;
+                }
+                return size;
+            };
+
             records.forEach((record, index) => {
                 const row = tbody.insertRow();
-                if (record.priority === 'High') row.classList.add('high-priority');
                 
                 const c20 = parseInt(record.container20) || 0;
                 const c40 = parseInt(record.container40) || 0;
@@ -1089,15 +1123,33 @@
                 total20 += c20; total40 += c40; totalDbl20 += cDbl20;
                 
                 row.insertCell().textContent = index + 1;
-                row.insertCell().textContent = record.salesPerson;
-                row.insertCell().textContent = record.customerName;
-                row.insertCell().textContent = record.location || '-';
+                const isSalesPersonGroupStart = index === 0 || records[index - 1].salesPerson !== record.salesPerson;
+                if (isSalesPersonGroupStart) {
+                    const salesPersonCell = row.insertCell();
+                    salesPersonCell.textContent = record.salesPerson;
+                    salesPersonCell.rowSpan = getSalesPersonGroupSize(index);
+                }
+                const customerCell = row.insertCell();
+                customerCell.innerHTML = getCustomerNameHtml(record, selectedDate);
+                customerCell.style.fontWeight = 'normal';
+                customerCell.style.whiteSpace = 'nowrap';
+                customerCell.style.wordWrap = 'normal';
+                customerCell.style.overflow = 'hidden';
+                customerCell.style.textOverflow = 'ellipsis';
+                customerCell.style.fontSize = 'inherit';
+                const locationCell = row.insertCell();
+                locationCell.textContent = record.location || '-';
+                locationCell.style.whiteSpace = 'nowrap';
+                locationCell.style.overflow = 'hidden';
+                locationCell.style.textOverflow = 'ellipsis';
                 row.insertCell().textContent = c20 > 0 ? c20 : '';
                 row.insertCell().textContent = c40 > 0 ? c40 : '';
                 row.insertCell().textContent = cDbl20 > 0 ? cDbl20 : '';
                 const dateCell = row.insertCell();
                 dateCell.innerHTML = formatDateForDisplay(record.stuffingDate);
-                row.insertCell().textContent = record.priority;
+                const priorityCell = row.insertCell();
+                priorityCell.textContent = record.priority;
+                if (record.priority === 'High') priorityCell.classList.add('high-priority');
                 row.insertCell().textContent = record.remarks || '-';
                 
                 if (targetTableId === 'reportTable') {
@@ -1318,8 +1370,9 @@
       
           // Sort
           records.sort((a, b) => {
-              if (a.stuffingDate !== b.stuffingDate) return a.stuffingDate.localeCompare(b.stuffingDate);
-              return a.salesPerson.localeCompare(b.salesPerson);
+              const salesCompare = (a.salesPerson || '').localeCompare(b.salesPerson || '');
+              if (salesCompare !== 0) return salesCompare;
+              return (a.stuffingDate || '').localeCompare(b.stuffingDate || '');
           });
       
           let total20 = 0, total40 = 0, totalDbl = 0;
@@ -1357,7 +1410,7 @@
                       table { border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; font-size: 11px; }
                       th { background-color: #333333; color: white; border: 1px solid black; padding: 5px; font-weight: bold; text-align: center; }
                       td { border: 1px solid black; padding: 5px; text-align: left; vertical-align: middle; }
-                      .high-priority { background-color: #b5ff0d; }
+                      .high-priority { background-color: #ff9ecf; }
                       .text-center { text-align: center; }
                       .total-row { background-color: #e0e0e0; font-weight: bold; }
                       .grand-total { background-color: #d1e7dd; color: #0f5132; font-weight: bold; text-align: center; }
@@ -1371,8 +1424,8 @@
                               <th style="width: 120px;">Sales Person</th>
                               <th style="width: 200px;">Customer Name</th>
                               <th style="width: 100px;">Location</th>
-                              <th style="width: 60px;">20"</th>
-                              <th style="width: 60px;">40"</th>
+                              <th style="width: 30px;">20"</th>
+                              <th style="width: 30px;">40"</th>
                               <th style="width: 80px;">Double 20"</th>
                               <th style="width: 150px;">Stuffing Date</th>
                               <th style="width: 80px;">Priority</th>
@@ -1382,6 +1435,15 @@
                       <tbody>
           `;
       
+          const getSalesPersonGroupSize = (startIndex) => {
+              const salesPerson = records[startIndex]?.salesPerson || '';
+              let size = 1;
+              while ((startIndex + size) < records.length && (records[startIndex + size]?.salesPerson || '') === salesPerson) {
+                  size += 1;
+              }
+              return size;
+          };
+
           records.forEach((r, i) => {
               const c20 = parseInt(r.container20) || 0;
               const c40 = parseInt(r.container40) || 0;
@@ -1391,20 +1453,22 @@
               total40 += c40;
               totalDbl += cDbl;
       
-              const bgStyle = r.priority === 'High' ? 'style="background-color: #b5ff0d;"' : '';
+              const priorityStyle = r.priority === 'High' ? 'style="background-color: #ff9ecf;"' : '';
+              const isSalesPersonGroupStart = i === 0 || records[i - 1].salesPerson !== r.salesPerson;
+              const salesPersonCell = isSalesPersonGroupStart ? `<td rowspan="${getSalesPersonGroupSize(i)}">${r.salesPerson}</td>` : '';
       
               table += `
                   <tr>
-                      <td class="text-center" ${bgStyle}>${i + 1}</td>
-                      <td ${bgStyle}>${r.salesPerson}</td>
-                      <td ${bgStyle}>${r.customerName}</td>
-                      <td ${bgStyle}>${r.location || '-'}</td>
-                      <td class="text-center" ${bgStyle}>${c20 || ''}</td>
-                      <td class="text-center" ${bgStyle}>${c40 || ''}</td>
-                      <td class="text-center" ${bgStyle}>${cDbl || ''}</td>
-                      <td class="text-center" ${bgStyle}>${getPlainDate(r.stuffingDate)}</td>
-                      <td class="text-center" ${bgStyle}>${r.priority}</td>
-                      <td ${bgStyle}>${r.remarks || '-'}</td>
+                      <td class="text-center">${i + 1}</td>
+                      ${salesPersonCell}
+                      <td style="font-weight: normal; white-space: nowrap;">${getCustomerNameHtml(r, selectedDate)}</td>
+                      <td>${r.location || '-'}</td>
+                      <td class="text-center">${c20 || ''}</td>
+                      <td class="text-center">${c40 || ''}</td>
+                      <td class="text-center">${cDbl || ''}</td>
+                      <td class="text-center">${getPlainDate(r.stuffingDate)}</td>
+                      <td class="text-center" ${priorityStyle}>${r.priority}</td>
+                      <td>${r.remarks || '-'}</td>
                   </tr>
               `;
           });
@@ -1455,7 +1519,11 @@
                 return;
             }
 
-            visibleRecords.sort((a, b) => a.salesPerson.localeCompare(b.salesPerson));
+            visibleRecords.sort((a, b) => {
+                const salesCompare = (a.salesPerson || '').localeCompare(b.salesPerson || '');
+                if (salesCompare !== 0) return salesCompare;
+                return (a.stuffingDate || '').localeCompare(b.stuffingDate || '');
+            });
 
             let t20=0, t40=0, tDbl=0;
             // Data for Summaries
@@ -1599,23 +1667,36 @@
                             <th style="padding:5px; border:1px solid black;">Remarks</th>
                         </tr>`;
             
+            const getSalesPersonGroupSize = (startIndex) => {
+                const salesPerson = visibleRecords[startIndex]?.salesPerson || '';
+                let size = 1;
+                while ((startIndex + size) < visibleRecords.length && (visibleRecords[startIndex + size]?.salesPerson || '') === salesPerson) {
+                    size += 1;
+                }
+                return size;
+            };
+
             visibleRecords.forEach((r, i) => {
                 const c20 = parseInt(r.container20)||0;
                 const c40 = parseInt(r.container40)||0;
                 const cDbl = parseInt(r.containerDbl20)||0;
                 
-                const bg = r.priority === 'High' ? '#b5ff0d' : '#ffffff';
+                const priorityBg = r.priority === 'High' ? '#ff9ecf' : '#ffffff';
+                const isSalesPersonGroupStart = i === 0 || visibleRecords[i - 1].salesPerson !== r.salesPerson;
+                const salesPersonCell = isSalesPersonGroupStart
+                    ? `<td rowspan="${getSalesPersonGroupSize(i)}" style="padding:5px; border:1px solid black;">${r.salesPerson}</td>`
+                    : '';
                 
-                html += `<tr style="background-color: ${bg}; color: black;">
+                html += `<tr style="color: black;">
                     <td style="text-align:center; padding:5px; border:1px solid black;">${i+1}</td>
-                    <td style="padding:5px; border:1px solid black;">${r.salesPerson}</td>
-                    <td style="padding:5px; border:1px solid black;">${r.customerName}</td>
+                    ${salesPersonCell}
+                    <td style="padding:5px; border:1px solid black; font-weight:normal; white-space:nowrap;">${getCustomerNameHtml(r, selectedDate)}</td>
                     <td style="padding:5px; border:1px solid black;">${r.location||'-'}</td>
                     <td style="text-align:center; padding:5px; border:1px solid black;">${c20||''}</td>
                     <td style="text-align:center; padding:5px; border:1px solid black;">${c40||''}</td>
                     <td style="text-align:center; padding:5px; border:1px solid black;">${cDbl||''}</td>
                     <td style="text-align:center; padding:5px; border:1px solid black;">${formatDate(r.stuffingDate)}</td>
-                    <td style="text-align:center; padding:5px; border:1px solid black;">${r.priority}</td>
+                    <td style="text-align:center; padding:5px; border:1px solid black; background-color:${priorityBg};">${r.priority}</td>
                     <td style="padding:5px; border:1px solid black;">${r.remarks||'-'}</td>
                 </tr>`;
             });
