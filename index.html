@@ -123,6 +123,28 @@
             align-items: center;
             gap: 15px;
         }
+        .date-filter-legend {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #003b7a;
+            flex-wrap: wrap;
+            justify-content: flex-start;
+            text-align: left;
+            margin-right: auto;
+        }
+        .date-filter-legend-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+        }
+        .date-filter-dot {
+            font-size: 1.15em;
+            line-height: 1;
+        }
         .date-filter-container label {
             margin: 0;
             font-size: 1.1rem;
@@ -154,6 +176,7 @@
         #reportTable th:nth-child(8), #reportTable td:nth-child(8) { width: 92px; min-width: 92px; text-align: center; } /* Date */
         #reportTable th:nth-child(9), #reportTable td:nth-child(9) { width: 74px; min-width: 74px; text-align: center; } /* Priority */
         #reportTable th:nth-child(10), #reportTable td:nth-child(10) { width: 114px; min-width: 114px; } /* Remarks */
+        #reportTable td:nth-child(10) { text-align: left !important; color: #0056b3; font-size: 0.82em; font-weight: 700; line-height: 1.2; }
         #reportTable th:nth-child(11), #reportTable td:nth-child(11) { width: 88px; min-width: 88px; max-width: 88px; text-align: center; padding-left: 2px; padding-right: 2px; } /* Actions */
         
         #reportTable tbody tr:nth-child(even) { background-color: #f8f8f8; }
@@ -238,6 +261,7 @@
         #hiddenReportTable .high-priority { background-color: #ff9ecf !important; }
         #hiddenReportTable th:nth-child(5), #hiddenReportTable td:nth-child(5) { width: 34px; min-width: 34px; max-width: 34px; text-align: center; padding-left: 2px; padding-right: 2px; }
         #hiddenReportTable th:nth-child(6), #hiddenReportTable td:nth-child(6) { width: 34px; min-width: 34px; max-width: 34px; text-align: center; padding-left: 2px; padding-right: 2px; }
+        #hiddenReportTable td:nth-child(10) { text-align: left !important; color: #0056b3; font-size: 0.82em; font-weight: 700; line-height: 1.2; }
         #hiddenReportTable tfoot td { font-weight: bold; background-color: #eee; border-top: 2px solid #333; }
         #hiddenReportTable .action-col { display: none !important; }
 
@@ -408,6 +432,11 @@
                 
                 <!-- DATE FILTER Linked to Entry Date -->
                 <div class="date-filter-container">
+                    <div class="date-filter-legend">
+                        <span class="date-filter-legend-item"><span class="date-filter-dot" style="color:#1f6fff;">●</span>Blue : Today Stuffing</span>
+                        <span class="date-filter-legend-item"><span class="date-filter-dot" style="color:#58b22f;">●</span>Green : Tommrow's Stuffing</span>
+                        <span class="date-filter-legend-item"><span class="date-filter-dot" style="color:#ff1f1f;">●</span>Red : Advance Planning</span>
+                    </div>
                     <label for="viewDate">📅 See Old Dated Plannings ->:</label>
                     <input type="date" id="viewDate" onchange="updateTableDisplay()">
                 </div>
@@ -564,8 +593,9 @@
             const base = parseIsoDateLocal(baseDate);
             if (!stuffing || !base) return null;
             const dayDiff = Math.round((stuffing.getTime() - base.getTime()) / 86400000);
+            if (dayDiff === 0) return { color: '#1f6fff', symbol: '●' };
             if (dayDiff === 1) return { color: '#58b22f', symbol: '●' };
-            if (dayDiff === 2) return { color: '#ff1f1f', symbol: '●' };
+            if (dayDiff >= 2) return { color: '#ff1f1f', symbol: '●' };
             return null;
         }
 
@@ -1149,7 +1179,13 @@
                 const priorityCell = row.insertCell();
                 priorityCell.textContent = record.priority;
                 if (record.priority === 'High') priorityCell.classList.add('high-priority');
-                row.insertCell().textContent = record.remarks || '-';
+                const remarksCell = row.insertCell();
+                remarksCell.textContent = record.remarks || '-';
+                remarksCell.style.textAlign = 'left';
+                remarksCell.style.color = '#0056b3';
+                remarksCell.style.fontSize = '0.82em';
+                remarksCell.style.fontWeight = '700';
+                remarksCell.style.lineHeight = '1.2';
                 
                 if (targetTableId === 'reportTable') {
                     const actionCell = row.insertCell();
